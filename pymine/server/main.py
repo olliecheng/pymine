@@ -14,10 +14,10 @@ async def enable_encryption(websocket, encryption_session: encryption):
     requestId = str(uuid.uuid1())
     encrypted_payload = {
         "body": {
-            "commandLine": 'enableencryption "{public_key}" "{salt}"'.format({
-                "public_key": encryption_session.b64_public_key,
-                "salt": encryption_session.b64_salt
-            }),
+            "commandLine": 'enableencryption "{public_key}" "{salt}"'.format(
+                public_key=encryption_session.b64_public_key,
+                salt=encryption_session.b64_salt
+            ),
             "version": 1
         },
         "header": {
@@ -27,8 +27,8 @@ async def enable_encryption(websocket, encryption_session: encryption):
         }
     }
 
-    # send the payload!
     await websocket.send(json.dumps(encrypted_payload))
+
     for _ in range(3):
         response = json.loads(await websocket.recv())
 
