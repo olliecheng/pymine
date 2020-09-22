@@ -4,27 +4,31 @@ import uuid
 import json
 import asyncio
 import websockets
+import base64
+
+from dataclasses import replace
 
 from typing import List, Dict, Tuple, Sequence
 
-import server.encryption as encryption
+from pymine.server.encryption import EncryptionSession
 
 
-async def enable_encryption(websocket, encryption_session: encryption):
+async def enable_encryption(websocket, session: EncryptionSession) -> EncryptionSession:
     requestId = str(uuid.uuid1())
+
     encrypted_payload = {
         "body": {
             "commandLine": 'enableencryption "{public_key}" "{salt}"'.format(
-                public_key=encryption_session.b64_public_key,
-                salt=encryption_session.b64_salt
+                public_key=session.b64_public_key,
+                salt=session.b64_salt,
             ),
-            "version": 1
+            "version": 1,
         },
         "header": {
             "requestId": requestId,
             "messagePurpose": "commandRequest",
-            "version": 1
-        }
+            "version": 1,
+        },
     }
 
     await websocket.send(json.dumps(encrypted_payload))
@@ -36,32 +40,36 @@ async def enable_encryption(websocket, encryption_session: encryption):
             break
     else:
         raise ConnectionError(
-            "Server not responding to unique request ID. " +
-            "Check it's not busy with multiple instances?"
+            "Server not responding to unique request ID. "
+            + "Check it's not busy with multiple instances?"
         )
 
-    encryption_session.client_public_key = response["body"]["publicKey"]
+    public_key = base64.b64decode(response["body"]["publicKey"])
+
+    return replace(session, client_public_key=public_key, authenticated=True)
 
 
 def start_server(port: int = 19131):
-    encryption_session = encryption.EncryptionSession()
+    unauthenticated_session = EncryptionSession()
 
     async def hello(websocket, path):
-        await enable_encryption(websocket, encryption_session)
+        # authenticate session
+        session = await enable_encryption(websocket, unauthenticated_session)
 
         print("Encrypted connection established!")
 
         body = await websocket.recv()
 
-        body_dec = encryption_session.decrypt(body.encode("utf-8"))
+        body_dec = session.decrypt(body.encode("utf-8"))
 
-        print(f"< {body}")
-        # print(f"C< {body_dec}")
+        # print(f"< {body}")
+        print(f"C< {body_dec}")
 
     print(f"Starting server on port {port}")
 
-    server = websockets.serve(hello, "localhost", port, subprotocols=[
-        "com.microsoft.minecraft.wsencrypt"])
+    server = websockets.serve(
+        hello, "localhost", port, subprotocols=["com.microsoft.minecraft.wsencrypt"]
+    )
 
     try:
         asyncio.get_event_loop().run_until_complete(server)

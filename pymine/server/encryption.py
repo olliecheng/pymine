@@ -7,21 +7,28 @@ from base64 import b64encode, b64decode
 from Crypto.PublicKey import ECC
 from Crypto.Cipher import AES
 
-from typing import Tuple
+from dataclasses import dataclass, field
+
+from typing import Tuple, Optional
 
 
+class NotAutheticatedError(Exception):
+    pass
+
+
+@dataclass
 class EncryptionSession:
-    def __init__(self):
-        self.key = ECC.generate(curve="P-384")
+    key: ECC.EccKey = field(default_factory=lambda: ECC.generate(curve="P-384"))
+    salt: bytearray = field(
+        default_factory=lambda: bytearray(random.getrandbits(8) for i in range(16))
+    )  # 16 byte array
 
-        self.salt = bytearray(
-            random.getrandbits(8) for i in range(16)
-        )  # 16 byte array
+    client_public_key: Optional[bytes] = None
+    authenticated: bool = False
 
+    def __post_init__(self):
         self.shared_secret = self.compute_shared_secret(self.key)
-        self.secret_key = self.hash_from_seeds((
-            self.salt, self.shared_secret
-        ))
+        self.secret_key = self.hash_from_seeds((self.salt, self.shared_secret))
 
         self.cipher = AES.new(self.secret_key, AES.MODE_CFB)
         self.public_key = self.key.public_key().export_key(format="DER")
@@ -52,7 +59,13 @@ class EncryptionSession:
         self.b64_salt = btoa(self.salt)
 
     def decrypt(self, *args, **kwargs):
-        self.cipher.decrypt(*args, **kwargs)
+        if not self.authenticated:
+            raise NotAutheticatedError()
+
+        return self.cipher.decrypt(*args, **kwargs)
 
     def encrypt(self, *args, **kwargs):
-        self.cipher.encrypt(*args, **kwargs)
+        if not self.authenticated:
+            raise NotAutheticatedError()
+
+        return self.cipher.encrypt(*args, **kwargs)
