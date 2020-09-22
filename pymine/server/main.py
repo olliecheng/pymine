@@ -52,13 +52,35 @@ async def enable_encryption(websocket, session: EncryptionSession) -> Encryption
 def start_server(port: int = 19131):
     unauthenticated_session = EncryptionSession()
 
+    SAMPLE_PAYLOAD = {
+        "body": {
+            "commandLine": "say hello"
+        },
+        "header": {
+            "requestId": str(uuid.uuid1()),
+            "messagePurpose": "commandRequest",
+            "version": 1
+        }
+    }
+
     async def hello(websocket, path):
         # authenticate session
         session = await enable_encryption(websocket, unauthenticated_session)
 
         print("Encrypted connection established!")
 
+        # encoded_payload = base64.b64encode(
+        #     session.encrypt(json.dumps(SAMPLE_PAYLOAD).encode("utf-8"))
+        # ).decode()
+
+        encoded_payload = session.encrypt(json.dumps(SAMPLE_PAYLOAD).encode())
+
+        print(type(encoded_payload))
+        await websocket.send(encoded_payload.decode())
+        print(f"Sent! {encoded_payload}")
+
         body = await websocket.recv()
+        print(body)
 
         body_dec = session.decrypt(body.encode("utf-8"))
 

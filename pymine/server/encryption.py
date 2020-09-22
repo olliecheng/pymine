@@ -6,6 +6,7 @@ from base64 import b64encode, b64decode
 
 from Crypto.PublicKey import ECC
 from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 
 from dataclasses import dataclass, field
 
@@ -18,19 +19,24 @@ class NotAutheticatedError(Exception):
 
 @dataclass
 class EncryptionSession:
-    key: ECC.EccKey = field(default_factory=lambda: ECC.generate(curve="P-384"))
-    salt: bytearray = field(
-        default_factory=lambda: bytearray(random.getrandbits(8) for i in range(16))
-    )  # 16 byte array
+    key: ECC.EccKey = field(
+        default_factory=lambda: ECC.generate(curve="P-384"))
+    salt: bytes = field(
+        default_factory=lambda: get_random_bytes(16)
+    )
 
     client_public_key: Optional[bytes] = None
     authenticated: bool = False
 
     def __post_init__(self):
         self.shared_secret = self.compute_shared_secret(self.key)
-        self.secret_key = self.hash_from_seeds((self.salt, self.shared_secret))
 
-        self.cipher = AES.new(self.secret_key, AES.MODE_CFB)
+        secret_key_orig = bytearray(self.salt)
+        secret_key_orig.extend(self.shared_secret)
+        # self.secret_key = self.hash_from_seeds((self.salt, self.shared_secret))
+        self.secret_key = hashlib.sha256(secret_key_orig).digest()
+
+        self.cipher = AES.new(self.secret_key, AES.MODE_CFB, iv=self.salt)
         self.public_key = self.key.public_key().export_key(format="DER")
 
         self.client_public_key = None
