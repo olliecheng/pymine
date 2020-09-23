@@ -9,6 +9,7 @@ license = "MIT"
 python = "^3.6.1"
 websockets = "^8.1"
 pycryptodome = "^3.9.8"
+colorlog = "^4.2.1"
 
 [tool.poetry.dev-dependencies]
 
