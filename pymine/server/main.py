@@ -19,8 +19,7 @@ async def enable_encryption(websocket, session: EncryptionSession) -> Encryption
     encrypted_payload = {
         "body": {
             "commandLine": 'enableencryption "{public_key}" "{salt}"'.format(
-                public_key=session.b64_public_key,
-                salt=session.b64_salt,
+                public_key=session.b64_public_key, salt=session.b64_salt,
             ),
             "version": 1,
         },
@@ -46,21 +45,24 @@ async def enable_encryption(websocket, session: EncryptionSession) -> Encryption
 
     public_key = base64.b64decode(response["body"]["publicKey"])
 
-    return replace(session, client_public_key=public_key, authenticated=True)
+    return replace(
+        session,
+        client_public_key=public_key,
+        authenticated=True,
+        shared_secret=EncryptionSession.compute_shared_secret(public_key),
+    )
 
 
 def start_server(port: int = 19131):
     unauthenticated_session = EncryptionSession()
 
     SAMPLE_PAYLOAD = {
-        "body": {
-            "commandLine": "say hello"
-        },
+        "body": {"commandLine": "say hello"},
         "header": {
             "requestId": str(uuid.uuid1()),
             "messagePurpose": "commandRequest",
-            "version": 1
-        }
+            "version": 1,
+        },
     }
 
     async def hello(websocket, path):
@@ -76,7 +78,19 @@ def start_server(port: int = 19131):
         encoded_payload = session.encrypt(json.dumps(SAMPLE_PAYLOAD).encode())
 
         print(type(encoded_payload))
-        await websocket.send(encoded_payload.decode())
+
+        # TODO: abstract sending as text frame
+
+        # wait until all fragments have completed
+        await websocket.ensure_open()
+        while websocket._fragmented_message_waiter is not None:
+            await asyncio.shield(websocket._fragmented_message_waiter)
+
+        # send payload as text frame
+        await websocket.write_frame(True, 0x01, encoded_payload)
+
+        # await websocket.send(encoded_payload)
+
         print(f"Sent! {encoded_payload}")
 
         body = await websocket.recv()

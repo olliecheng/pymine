@@ -19,17 +19,15 @@ class NotAutheticatedError(Exception):
 
 @dataclass
 class EncryptionSession:
-    key: ECC.EccKey = field(
-        default_factory=lambda: ECC.generate(curve="P-384"))
-    salt: bytes = field(
-        default_factory=lambda: get_random_bytes(16)
-    )
+    key: ECC.EccKey = field(default_factory=lambda: ECC.generate(curve="P-384"))
+    salt: bytes = field(default_factory=lambda: get_random_bytes(16))
 
     client_public_key: Optional[bytes] = None
+    shared_secret: Optional[bytes] = None
     authenticated: bool = False
 
     def __post_init__(self):
-        self.shared_secret = self.compute_shared_secret(self.key)
+        # self.shared_secret = self.compute_shared_secret(self.client_public_key)
 
         secret_key_orig = bytearray(self.salt)
         secret_key_orig.extend(self.shared_secret)
