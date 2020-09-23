@@ -6,14 +6,18 @@ import asyncio
 import websockets
 import base64
 
+import pprint
+
 from dataclasses import replace
 
 from typing import List, Dict, Tuple, Sequence
 
-from pymine.server.encryption import EncryptionSession
+from pymine.server.encryption import EncryptionSession, AuthenticatedSession
 
 
-async def enable_encryption(websocket, session: EncryptionSession) -> EncryptionSession:
+async def enable_encryption(
+    websocket, session: EncryptionSession
+) -> AuthenticatedSession:
     requestId = str(uuid.uuid1())
 
     encrypted_payload = {
@@ -43,14 +47,12 @@ async def enable_encryption(websocket, session: EncryptionSession) -> Encryption
             + "Check it's not busy with multiple instances?"
         )
 
-    public_key = base64.b64decode(response["body"]["publicKey"])
+    try:
+        public_key = base64.b64decode(response["body"]["publicKey"])
+    except KeyError:
+        pprint.pprint(response)
 
-    return replace(
-        session,
-        client_public_key=public_key,
-        authenticated=True,
-        shared_secret=EncryptionSession.compute_shared_secret(public_key),
-    )
+    return AuthenticatedSession(session, public_key)
 
 
 def start_server(port: int = 19131):
