@@ -45,13 +45,18 @@ class AuthenticatedSession:
 
         self.secret_key = hashlib.sha256(secret_key_seed).digest()
 
-        self.cipher = AES.new(self.secret_key, AES.MODE_CFB, iv=self.secret_key)
+        self.encrypt_cipher = AES.new(
+            self.secret_key, AES.MODE_CFB, iv=self.secret_key[:16]
+        )
+        self.decrypt_cipher = AES.new(
+            self.secret_key, AES.MODE_CFB, iv=self.secret_key[:16]
+        )
 
     def encrypt(self, data: bytes):
-        return self.cipher.encrypt(data)
+        return self.encrypt_cipher.encrypt(data)
 
     def decrypt(self, data: bytes):
-        return self.cipher.decrypt(data)
+        return self.decrypt_cipher.decrypt(data)
 
     def encrypt_dict(self, data: dict):
         data_json = json.dumps(data).encode()

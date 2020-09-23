@@ -77,31 +77,18 @@ def start_server(port: int = 19131):
         #     session.encrypt(json.dumps(SAMPLE_PAYLOAD).encode("utf-8"))
         # ).decode()
 
-        encoded_payload = session.encrypt(json.dumps(SAMPLE_PAYLOAD).encode())
+        encoded_payload = session.encrypt_dict(SAMPLE_PAYLOAD)
 
-        print(type(encoded_payload))
-
-        # TODO: abstract sending as text frame
-
-        # wait until all fragments have completed
-        await websocket.ensure_open()
-        while websocket._fragmented_message_waiter is not None:
-            await asyncio.shield(websocket._fragmented_message_waiter)
-
-        # send payload as text frame
-        await websocket.write_frame(True, 0x01, encoded_payload)
-
-        # await websocket.send(encoded_payload)
-
-        print(f"Sent! {encoded_payload}")
+        await websocket.send(encoded_payload)
 
         body = await websocket.recv()
-        print(body)
 
-        body_dec = session.decrypt(body.encode("utf-8"))
+        body_dec = session.decrypt(body)
 
         # print(f"< {body}")
         print(f"C< {body_dec}")
+
+        __import__("sys").exit()
 
     print(f"Starting server on port {port}")
 
