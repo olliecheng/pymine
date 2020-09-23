@@ -6,7 +6,7 @@ import asyncio
 
 from typing import List, Dict, Tuple, Sequence
 
-from pymine.server.connectors.minecraft import MinecraftConnector
+from pymine.server.connectors import MinecraftConnector, WSConnector
 
 
 def start_server(port: int = 19131):
@@ -18,11 +18,15 @@ def start_server(port: int = 19131):
     minecraft_connection = MinecraftConnector(
         send_queue, recv_queue, port=19131
     )
+    ws_connection = WSConnector(send_queue, recv_queue)
 
-    event_loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop()
     try:
-        minecraft_connection.run_until_complete(event_loop)
-        event_loop.run_forever()
+        minecraft_connection.start(loop)
+        ws_connection.start(loop)
+
+        print("hi")
+        loop.run_forever()
     except KeyboardInterrupt:
         pass
 

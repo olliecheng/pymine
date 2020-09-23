@@ -14,6 +14,7 @@ pycryptodome = "^3.9.8"
 
 [tool.poetry.scripts]
 server = "pymine.server.main:start_server"
+client = "pymine.client:main"
 
 [build-system]
 requires = ["poetry>=0.12"]
