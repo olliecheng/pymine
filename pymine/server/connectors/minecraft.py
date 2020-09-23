@@ -27,55 +27,66 @@ SAMPLE_PAYLOAD = {
 
 
 class MinecraftConnector:
-    def __init__(self, path: str = "localhost", port: int = 19131, callback):
+    def __init__(self, send_queue: asyncio.Queue, recv_queue: asyncio.Queue, path: str = "localhost", port: int = 19131):
         self.ws = websockets.serve(
-            lambda ws, p: self.handler(ws, p)
+            lambda ws, p: self.handler(ws, p),
             path,
             port,
             subprotocols=["com.microsoft.minecraft.wsencrypt"],
+            ping_interval=None
         )
+
         self.unauthenticated_session = EncryptionSession()
 
-        self.callback = callback
+        self.send_queue = send_queue
+        self.recv_queue = recv_queue
 
     async def handler(self, websocket, path):
         # authenticate session
         session = await self.enable_encryption(websocket, self.unauthenticated_session)
         print("Encrypted connection established!")
 
-        consumer_task = asyncio.ensure_future(
-            self.receive_handler(websocket, path, session)
+        recv_task = asyncio.ensure_future(
+            self.recv_handler(websocket, path, session, self.send_queue)
         )
-        producer_task = asyncio.ensure_future(
-            producer_handler(websocket, path)
+        send_task = asyncio.ensure_future(
+            self.send_handler(websocket, path, session, self.recv_queue)
         )
 
         done, pending = await asyncio.wait(
-            [consumer_task, producer_task],
+            [recv_task, send_task],
             return_when=asyncio.FIRST_COMPLETED,
         )
+
         for task in pending:
             task.cancel()
 
+        # encoded_payload = self.session.encrypt_dict(SAMPLE_PAYLOAD)
+        # await websocket.send(encoded_payload)
 
-        encoded_payload = self.session.encrypt_dict(SAMPLE_PAYLOAD)
-        await websocket.send(encoded_payload)
+        # body = await websocket.recv()
 
-        body = await websocket.recv()
-
-        body_dec = self.session.decrypt(body)
+        # body_dec = self.session.decrypt(body)
 
         # print(f"< {body}")
-        print(f"C< {body_dec}")
+        # print(f"C< {body_dec}")
 
         __import__("sys").exit()
 
     @staticmethod
-    async def receive_handler(websocket, path, session: AuthenticatedSession):
+    async def recv_handler(websocket, path, session: AuthenticatedSession, queue: asyncio.Queue):
         async for message_encrypted in websocket:
             message = session.decrypt(message_encrypted)
-            
 
+            await queue.put(message)
+
+    @staticmethod
+    async def send_handler(websocket, path, session: AuthenticatedSession, queue: asyncio.Queue):
+        while True:
+            request: str = await queue.get()
+
+            payload = session.encrypt(request.encode())
+            await websocket.send(payload)
 
     async def enable_encryption(
         self, websocket, session: EncryptionSession
@@ -118,4 +129,3 @@ class MinecraftConnector:
 
     def run_until_complete(self, event_loop: asyncio.BaseEventLoop):
         event_loop.run_until_complete(self.ws)
-
