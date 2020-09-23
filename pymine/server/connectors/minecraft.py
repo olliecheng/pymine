@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
 
-import uuid
-import json
 import asyncio
-import websockets
 import base64
-
-import asyncio
-
+import json
 import pprint
-
-from dataclasses import replace
+import uuid
+import websockets
 
 from typing import List, Dict, Tuple, Sequence
 
+from pymine.utils.logging import getLogger
 from pymine.server.encryption import EncryptionSession, AuthenticatedSession
 
 from .template import Connector
+
+
+log = getLogger("connectors.minecraft")
 
 SAMPLE_PAYLOAD = {
     "body": {"commandLine": "say hello"},
@@ -28,8 +27,24 @@ SAMPLE_PAYLOAD = {
 }
 
 
+# fmt: off
+class AuthenticationError(Exception):
+    pass
+class TimeoutAuthenticationError(AuthenticationError):
+    pass
+class RefusedAuthenticationError(AuthenticationError):
+    pass
+# fmt: on
+
+
 class MinecraftConnector(Connector):
-    def __init__(self, send_queue: asyncio.Queue, recv_queue: asyncio.Queue, host: str = "localhost", port: int = 19131):
+    def __init__(
+        self,
+        send_queue: asyncio.Queue,
+        recv_queue: asyncio.Queue,
+        host: str = "localhost",
+        port: int = 19131,
+    ):
         self.unauthenticated_session = EncryptionSession()
 
         self.host = host
@@ -39,8 +54,14 @@ class MinecraftConnector(Connector):
         self.recv_queue = recv_queue
 
     async def handler(self, websocket, path):
-        session = await self.enable_encryption(websocket, self.unauthenticated_session)
-        print("Encrypted connection established!")
+        try:
+            session = await self.enable_encryption(
+                websocket, self.unauthenticated_session
+            )
+        except AuthenticationError:
+            return
+
+        log.debug("Encrypted connection established, now listening for updates...")
 
         receive_task = asyncio.ensure_future(
             self.recv_handler(websocket, path, session, self.send_queue)
@@ -49,27 +70,28 @@ class MinecraftConnector(Connector):
             self.send_handler(websocket, path, session, self.recv_queue)
         )
 
-        done, pending = await asyncio.wait(
-            [receive_task, send_task],
-            return_when=asyncio.FIRST_COMPLETED,
+        _done, pending = await asyncio.wait(
+            [receive_task, send_task], return_when=asyncio.FIRST_COMPLETED,
         )
 
         for task in pending:
             task.cancel()
 
     @staticmethod
-    async def recv_handler(websocket, path, session: EncryptionSession, queue: asyncio.Queue):
+    async def recv_handler(
+        websocket, path, session: EncryptionSession, queue: asyncio.Queue
+    ):
         async for message_encrypted in websocket:
             message = session.decrypt(message_encrypted)
 
             await queue.put(message)
 
     @staticmethod
-    async def send_handler(websocket, path, session: EncryptionSession, queue: asyncio.Queue):
+    async def send_handler(
+        websocket, path, session: EncryptionSession, queue: asyncio.Queue
+    ):
         while True:
             request: str = await queue.get()
-
-            print(f"Minecraft request {request}")
 
             payload = session.encrypt(request.encode())
             await websocket.send(payload)
@@ -101,15 +123,18 @@ class MinecraftConnector(Connector):
             if response["header"]["requestId"] == requestId:
                 break
         else:
-            raise ConnectionError(
-                "Server not responding to unique request ID. "
-                + "Check it's not busy with multiple instances?"
+            log.error(
+                "Could not authenticate: not responding to unique request ID. "
+                + "Check it's not busy with requests from multiple instances?"
             )
+            raise TimeoutAuthenticationError
 
         try:
             public_key = base64.b64decode(response["body"]["publicKey"])
         except KeyError:
-            pprint.pprint(response)
+            log.debug(pprint.pformat(response))
+            log.error("Could not authenticate: MC refused connection.")
+            raise RefusedAuthenticationError
 
         return AuthenticatedSession(session, public_key)
 
@@ -120,6 +145,7 @@ class MinecraftConnector(Connector):
             self.port,
             subprotocols=["com.microsoft.minecraft.wsencrypt"],
             ping_interval=None,
-            loop=loop
+            loop=loop,
         )
         loop.run_until_complete(self.ws)
+        log.debug("Started websocket server.")

@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 
-import uuid
-import json
 import asyncio
 
 from typing import List, Dict, Tuple, Sequence
 
 from pymine.server.connectors import MinecraftConnector, WSBridgeConnector
+from pymine.utils.logging import getLogger
+
+log = getLogger("main")
+log.setLevel("INFO")
 
 
 def start_server(port: int = 19131):
-    print(f"Starting server on port {port}")
-
+    log.info("Server started.")
     send_queue = asyncio.Queue()
     recv_queue = asyncio.Queue()
 
@@ -25,10 +26,10 @@ def start_server(port: int = 19131):
         minecraft_connection.start(loop)
         ws_connection.start(loop)
 
-        print("hi")
+        log.debug("Starting event loop...")
         loop.run_forever()
     except KeyboardInterrupt:
-        pass
+        log.info("KeyboardInterrupt, closing...")
 
 
 if __name__ == "__main__":

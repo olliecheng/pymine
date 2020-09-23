@@ -1,13 +1,23 @@
-import websockets
 import asyncio
+import websockets
 
 from typing import List
 
 from .template import Connector
 
+from pymine.utils.logging import getLogger
+
+log = getLogger("connectors.bridge")
+
 
 class WSBridgeConnector(Connector):
-    def __init__(self, send_queue: asyncio.Queue, recv_queue: asyncio.Queue, host: str = "localhost", port: int = 19132):
+    def __init__(
+        self,
+        send_queue: asyncio.Queue,
+        recv_queue: asyncio.Queue,
+        host: str = "localhost",
+        port: int = 19132,
+    ):
         self.host = host
         self.port = port
 
@@ -27,9 +37,8 @@ class WSBridgeConnector(Connector):
             self.broadcast_handler(websocket, path, broadcast_queue)
         )
 
-        done, pending = await asyncio.wait(
-            [command_task, broadcast_task],
-            return_when=asyncio.FIRST_COMPLETED,
+        _done, pending = await asyncio.wait(
+            [command_task, broadcast_task], return_when=asyncio.FIRST_COMPLETED,
         )
 
         for task in pending:
@@ -49,7 +58,9 @@ class WSBridgeConnector(Connector):
             await websocket.send(response)
 
     @staticmethod
-    async def broadcast_announcer(broadcast_queues: List[asyncio.Queue], send_queue: asyncio.Queue):
+    async def broadcast_announcer(
+        broadcast_queues: List[asyncio.Queue], send_queue: asyncio.Queue
+    ):
         while True:
             response = await send_queue.get()
 
@@ -57,13 +68,12 @@ class WSBridgeConnector(Connector):
                 await q.put(response)
 
     def start(self, loop: asyncio.BaseEventLoop):
-        loop.create_task(self.broadcast_announcer(
-            self.broadcast_queues, self.send_queue)
+        loop.create_task(
+            self.broadcast_announcer(self.broadcast_queues, self.send_queue)
         )
         self.ws = websockets.serve(
-            lambda ws, p: self.handler(ws, p),
-            self.host,
-            self.port,
-            loop=loop
+            lambda ws, p: self.handler(ws, p), self.host, self.port, loop=loop
         )
+
         loop.run_until_complete(self.ws)
+        log.debug("Started websocket server.")
