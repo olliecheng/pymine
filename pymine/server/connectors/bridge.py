@@ -6,7 +6,7 @@ from typing import List
 from .template import Connector
 
 
-class WSConnector(Connector):
+class WSBridgeConnector(Connector):
     def __init__(self, send_queue: asyncio.Queue, recv_queue: asyncio.Queue, host: str = "localhost", port: int = 19132):
         self.host = host
         self.port = port

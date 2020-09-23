@@ -1,2 +1,2 @@
 from .minecraft import MinecraftConnector
-from .bridge import WSConnector
+from .bridge import WSBridgeConnector
