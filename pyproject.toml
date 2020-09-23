@@ -14,7 +14,7 @@ colorlog = "^4.2.1"
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
-server = "pymine.server.main:start_server"
+server = "pymine.server:start_server"
 client = "pymine.client:main"
 
 [build-system]

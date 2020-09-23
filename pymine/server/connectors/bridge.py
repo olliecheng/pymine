@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+#
+#   The Bridge connector, which allows for external applications to communicate
+#   with the server. Currently supports websocket connections.
+#
+#  A part of denosawr/pymine
+
+
 import asyncio
 import websockets
 
@@ -11,6 +19,14 @@ log = getLogger("connectors.bridge")
 
 
 class WSBridgeConnector(Connector):
+    """
+    Connects an external websocket with the queues.
+
+    Key parameters:
+      send_queue: A queue of responses from MC
+      recv_queue: A queue of commands to send to MC
+    """
+
     def __init__(
         self,
         send_queue: asyncio.Queue,
@@ -26,7 +42,20 @@ class WSBridgeConnector(Connector):
 
         self.broadcast_queues = []
 
+    def start(self, loop: asyncio.BaseEventLoop):
+        loop.create_task(
+            self.broadcast_announcer(self.broadcast_queues, self.send_queue)
+        )
+        self.ws = websockets.serve(
+            lambda ws, p: self.handler(ws, p), self.host, self.port, loop=loop
+        )
+
+        loop.run_until_complete(self.ws)
+        log.debug("Started websocket server.")
+
     async def handler(self, websocket, path):
+        "Handles individual websocket requests."
+
         broadcast_queue = asyncio.Queue()
         self.broadcast_queues.append(broadcast_queue)
 
@@ -44,36 +73,40 @@ class WSBridgeConnector(Connector):
         for task in pending:
             task.cancel()
 
-    @staticmethod
-    async def command_handler(websocket, path, queue: asyncio.Queue):
-        async for message in websocket:
-            print(f"Command recv: {message}")
-            await queue.put(message)
-
-    @staticmethod
-    async def broadcast_handler(websocket, path, queue: asyncio.Queue):
-        while True:
-            response: str = await queue.get()
-
-            await websocket.send(response)
+        # TODO: graceful cleanup, remove from broadcast queue
 
     @staticmethod
     async def broadcast_announcer(
         broadcast_queues: List[asyncio.Queue], send_queue: asyncio.Queue
     ):
+        """
+        Announces MC responses to all individual websocket connections.
+        Does not send any network requests; self.broadcast_handler will receive
+        and process announcements.
+        """
+
         while True:
             response = await send_queue.get()
 
             for q in broadcast_queues:
                 await q.put(response)
 
-    def start(self, loop: asyncio.BaseEventLoop):
-        loop.create_task(
-            self.broadcast_announcer(self.broadcast_queues, self.send_queue)
-        )
-        self.ws = websockets.serve(
-            lambda ws, p: self.handler(ws, p), self.host, self.port, loop=loop
-        )
+    @staticmethod
+    async def command_handler(websocket, path, queue: asyncio.Queue):
+        "Receives external commands and adds to the queue."
 
-        loop.run_until_complete(self.ws)
-        log.debug("Started websocket server.")
+        async for message in websocket:
+            print(f"Command recv: {message}")
+            await queue.put(message)
+
+    @staticmethod
+    async def broadcast_handler(websocket, path, queue: asyncio.Queue):
+        """
+        Broadcasts messages to individual websocket connections.
+        Messages come from announcements by self.broadcast_announcer.
+        """
+
+        while True:
+            response: str = await queue.get()
+
+            await websocket.send(response)
