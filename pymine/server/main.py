@@ -15,6 +15,30 @@ from typing import List, Dict, Tuple, Sequence
 from pymine.server.encryption import EncryptionSession, AuthenticatedSession
 
 
+async def minecraft_connection_handler(websocket, path):
+    # authenticate session
+    session = await enable_encryption(websocket, unauthenticated_session)
+
+    print("Encrypted connection established!")
+
+    # encoded_payload = base64.b64encode(
+    #     session.encrypt(json.dumps(SAMPLE_PAYLOAD).encode("utf-8"))
+    # ).decode()
+
+    encoded_payload = session.encrypt_dict(SAMPLE_PAYLOAD)
+
+    await websocket.send(encoded_payload)
+
+    body = await websocket.recv()
+
+    body_dec = session.decrypt(body)
+
+    # print(f"< {body}")
+    print(f"C< {body_dec}")
+
+    __import__("sys").exit()
+
+
 async def enable_encryption(
     websocket, session: EncryptionSession
 ) -> AuthenticatedSession:
@@ -58,46 +82,14 @@ async def enable_encryption(
 def start_server(port: int = 19131):
     unauthenticated_session = EncryptionSession()
 
-    SAMPLE_PAYLOAD = {
-        "body": {"commandLine": "say hello"},
-        "header": {
-            "requestId": str(uuid.uuid1()),
-            "messagePurpose": "commandRequest",
-            "version": 1,
-        },
-    }
-
-    async def hello(websocket, path):
-        # authenticate session
-        session = await enable_encryption(websocket, unauthenticated_session)
-
-        print("Encrypted connection established!")
-
-        # encoded_payload = base64.b64encode(
-        #     session.encrypt(json.dumps(SAMPLE_PAYLOAD).encode("utf-8"))
-        # ).decode()
-
-        encoded_payload = session.encrypt_dict(SAMPLE_PAYLOAD)
-
-        await websocket.send(encoded_payload)
-
-        body = await websocket.recv()
-
-        body_dec = session.decrypt(body)
-
-        # print(f"< {body}")
-        print(f"C< {body_dec}")
-
-        __import__("sys").exit()
-
     print(f"Starting server on port {port}")
 
-    server = websockets.serve(
+    minecraft_connection_server = websockets.serve(
         hello, "localhost", port, subprotocols=["com.microsoft.minecraft.wsencrypt"]
     )
 
     try:
-        asyncio.get_event_loop().run_until_complete(server)
+        asyncio.get_event_loop().run_until_complete(minecraft_connection_server)
         asyncio.get_event_loop().run_forever()
     except KeyboardInterrupt:
         pass
