@@ -1,2 +1,3 @@
 from .minecraft import MinecraftConnector
-from .bridge import WSBridgeConnector
+from .wsbridge import WSBridgeConnector
+from .base import Subscription, Publisher

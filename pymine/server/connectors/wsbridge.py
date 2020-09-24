@@ -11,7 +11,7 @@ import websockets
 
 from typing import List
 
-from .base import Connector
+from .base import Connector, Publisher
 
 from pymine.utils.logging import getLogger
 
@@ -29,7 +29,7 @@ class WSBridgeConnector(Connector):
 
     def __init__(
         self,
-        send_queue: asyncio.Queue,
+        publisher: Publisher,
         recv_queue: asyncio.Queue,
         host: str = "localhost",
         port: int = 19132,
@@ -37,10 +37,8 @@ class WSBridgeConnector(Connector):
         self.host = host
         self.port = port
 
-        self.send_queue = send_queue
+        self.publisher = publisher
         self.recv_queue = recv_queue
-
-        self.broadcast_queues = []
 
     def start(self, loop: asyncio.BaseEventLoop):
         loop.create_task(
@@ -56,40 +54,20 @@ class WSBridgeConnector(Connector):
     async def handler(self, websocket, path):
         "Handles individual websocket requests."
 
-        broadcast_queue = asyncio.Queue()
-        self.broadcast_queues.append(broadcast_queue)
-
         command_task = asyncio.ensure_future(
             self.command_handler(websocket, path, self.recv_queue)
         )
-        broadcast_task = asyncio.ensure_future(
-            self.broadcast_handler(websocket, path, broadcast_queue)
+        subscription_task = asyncio.ensure_future(
+            self.subscription_handler(websocket, path, self.publisher)
         )
 
         _done, pending = await asyncio.wait(
-            [command_task, broadcast_task], return_when=asyncio.FIRST_COMPLETED,
+            [command_task, subscription_task],
+            return_when=asyncio.FIRST_COMPLETED,
         )
 
         for task in pending:
             task.cancel()
-
-        # TODO: graceful cleanup, remove from broadcast queue
-
-    @staticmethod
-    async def broadcast_announcer(
-        broadcast_queues: List[asyncio.Queue], send_queue: asyncio.Queue
-    ):
-        """
-        Announces MC responses to all individual websocket connections.
-        Does not send any network requests; self.broadcast_handler will receive
-        and process announcements.
-        """
-
-        while True:
-            response = await send_queue.get()
-
-            for q in broadcast_queues:
-                await q.put(response)
 
     @staticmethod
     async def command_handler(websocket, path, queue: asyncio.Queue):
@@ -100,13 +78,14 @@ class WSBridgeConnector(Connector):
             await queue.put(message)
 
     @staticmethod
-    async def broadcast_handler(websocket, path, queue: asyncio.Queue):
+    async def subscription_handler(websocket, path, publisher: Publisher):
         """
-        Broadcasts messages to individual websocket connections.
-        Messages come from announcements by self.broadcast_announcer.
+        Creates a new subscription to the queue and forwards all announcements
+        to the websocket.
         """
 
-        while True:
-            response: str = await queue.get()
+        with publisher.subscription() as queue:
+            while True:
+                response: str = await queue.get()
 
-            await websocket.send(response)
+                await websocket.send(response)

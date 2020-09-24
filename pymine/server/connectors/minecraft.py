@@ -19,7 +19,7 @@ from typing import List, Dict, Tuple, Sequence
 from pymine.utils.logging import getLogger
 from pymine.server.encryption import EncryptionSession, AuthenticatedSession
 
-from .base import Connector
+from .base import Connector, Publisher
 
 
 log = getLogger("connectors.minecraft")
@@ -49,7 +49,7 @@ class MinecraftConnector(Connector):
 
     def __init__(
         self,
-        send_queue: asyncio.Queue,
+        publisher: Publisher,
         recv_queue: asyncio.Queue,
         host: str = "localhost",
         port: int = 19131,
@@ -60,7 +60,7 @@ class MinecraftConnector(Connector):
         self.host = host
         self.port = port
 
-        self.send_queue = send_queue
+        self.publisher = publisher
         self.recv_queue = recv_queue
 
     async def handler(self, websocket, path):
@@ -85,7 +85,7 @@ class MinecraftConnector(Connector):
 
         # register tasks
         receive_task = asyncio.ensure_future(
-            self.recv_handler(websocket, path, session, self.send_queue)
+            self.recv_handler(websocket, path, session, self.publisher)
         )
         send_task = asyncio.ensure_future(
             self.send_handler(websocket, path, session, self.recv_queue)
@@ -100,14 +100,14 @@ class MinecraftConnector(Connector):
 
     @staticmethod
     async def recv_handler(
-        websocket, path, session: EncryptionSession, queue: asyncio.Queue
+        websocket, path, session: EncryptionSession, publisher: Publisher
     ):
         "Processes responses from Minecraft."
 
         async for message_encrypted in websocket:
             message = session.decrypt(message_encrypted)
 
-            await queue.put(message)
+            publisher.publish(message)
 
     @staticmethod
     async def send_handler(
