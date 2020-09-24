@@ -1,88 +1,136 @@
 #!/usr/bin/env python3
+#
+#   The Minecraft connector, which allows for communication via encrypted websocket
+#   with a Minecraft: Bedrock Edition client. Runs a WS server and transparently
+#   authenticates (upgrade to an encrypted connection) and performs transparent
+#   encryption and decryption.
+#
+#  A part of denosawr/pymine
 
-import uuid
-import json
 import asyncio
-import websockets
 import base64
-
-import asyncio
-
+import json
 import pprint
-
-from dataclasses import replace
+import uuid
+import websockets
 
 from typing import List, Dict, Tuple, Sequence
 
+from pymine.utils.logging import getLogger
 from pymine.server.encryption import EncryptionSession, AuthenticatedSession
 
-SAMPLE_PAYLOAD = {
-    "body": {"commandLine": "say hello"},
-    "header": {
-        "requestId": str(uuid.uuid1()),
-        "messagePurpose": "commandRequest",
-        "version": 1,
-    },
-}
+from .template import Connector
 
 
-class MinecraftConnector:
-    def __init__(self, path: str = "localhost", port: int = 19131, callback):
-        self.ws = websockets.serve(
-            lambda ws, p: self.handler(ws, p)
-            path,
-            port,
-            subprotocols=["com.microsoft.minecraft.wsencrypt"],
-        )
+log = getLogger("connectors.minecraft")
+
+
+# fmt: off
+class AuthenticationError(Exception):
+    pass
+class TimeoutAuthenticationError(AuthenticationError):
+    pass
+class RefusedAuthenticationError(AuthenticationError):
+    pass
+# fmt: on
+
+
+class MinecraftConnector(Connector):
+    """
+    Connects an instance of Minecraft: Bedrock Edition with the queues.
+
+    Key parameters:
+      send_queue: A queue of responses from MC
+      recv_queue: A queue of commands to send to MC
+
+    Warnings:
+      Can only accept one simultaneous connection request.
+    """
+
+    def __init__(
+        self,
+        send_queue: asyncio.Queue,
+        recv_queue: asyncio.Queue,
+        host: str = "localhost",
+        port: int = 19131,
+    ):
+        # generate new EncryptionSession, unique to this instance of the Connector.
         self.unauthenticated_session = EncryptionSession()
 
-        self.callback = callback
+        self.host = host
+        self.port = port
+
+        self.send_queue = send_queue
+        self.recv_queue = recv_queue
 
     async def handler(self, websocket, path):
-        # authenticate session
-        session = await self.enable_encryption(websocket, self.unauthenticated_session)
-        print("Encrypted connection established!")
+        log.debug("Received connection request.")
 
-        consumer_task = asyncio.ensure_future(
-            self.receive_handler(websocket, path, session)
+        # Check only one connection occurs at a time
+        if websocket.sockets != 1:
+            # this connection must be the extra socket!
+            log.error("Received second connection request, this has been refused.")
+            return
+
+        # Upgrade connection immediately upon connection
+        try:
+            session = await self.enable_encryption(
+                websocket, self.unauthenticated_session
+            )
+        except AuthenticationError as err:
+            log.error(f"Could not authenticate: {err}")
+            return
+
+        log.debug("Encrypted connection established, now listening for updates...")
+
+        # register tasks
+        receive_task = asyncio.ensure_future(
+            self.recv_handler(websocket, path, session, self.send_queue)
         )
-        producer_task = asyncio.ensure_future(
-            producer_handler(websocket, path)
+        send_task = asyncio.ensure_future(
+            self.send_handler(websocket, path, session, self.recv_queue)
         )
 
-        done, pending = await asyncio.wait(
-            [consumer_task, producer_task],
-            return_when=asyncio.FIRST_COMPLETED,
+        _done, pending = await asyncio.wait(
+            [receive_task, send_task], return_when=asyncio.FIRST_COMPLETED,
         )
+
         for task in pending:
             task.cancel()
 
-
-        encoded_payload = self.session.encrypt_dict(SAMPLE_PAYLOAD)
-        await websocket.send(encoded_payload)
-
-        body = await websocket.recv()
-
-        body_dec = self.session.decrypt(body)
-
-        # print(f"< {body}")
-        print(f"C< {body_dec}")
-
-        __import__("sys").exit()
-
     @staticmethod
-    async def receive_handler(websocket, path, session: AuthenticatedSession):
+    async def recv_handler(
+        websocket, path, session: EncryptionSession, queue: asyncio.Queue
+    ):
+        "Processes responses from Minecraft."
+
         async for message_encrypted in websocket:
             message = session.decrypt(message_encrypted)
-            
 
+            await queue.put(message)
 
+    @staticmethod
+    async def send_handler(
+        websocket, path, session: EncryptionSession, queue: asyncio.Queue
+    ):
+        "Processes requests to Minecraft."
+
+        while True:
+            request: str = await queue.get()
+
+            payload = session.encrypt(request.encode())
+            await websocket.send(payload)
+
+    @staticmethod
     async def enable_encryption(
-        self, websocket, session: EncryptionSession
+        websocket, session: EncryptionSession
     ) -> AuthenticatedSession:
+        "Negotiates the authentication handshake."
+
+        # generate a unique request ID for the payload
         requestId = str(uuid.uuid1())
 
-        encrypted_payload = {
+        authentication_payload = {
             "body": {
                 "commandLine": 'enableencryption "{public_key}" "{salt}"'.format(
                     public_key=session.b64_public_key, salt=session.b64_salt,
@@ -96,26 +144,37 @@ class MinecraftConnector:
             },
         }
 
-        await websocket.send(json.dumps(encrypted_payload))
+        await websocket.send(json.dumps(authentication_payload))
 
+        # check that the response has a matching requestId
         for _ in range(3):
             response = json.loads(await websocket.recv())
 
             if response["header"]["requestId"] == requestId:
                 break
         else:
-            raise ConnectionError(
-                "Server not responding to unique request ID. "
-                + "Check it's not busy with multiple instances?"
+            raise TimeoutAuthenticationError(
+                "Not responding to unique request ID. "
+                + "Check it's not busy with requests from multiple instances?"
             )
 
         try:
             public_key = base64.b64decode(response["body"]["publicKey"])
         except KeyError:
-            pprint.pprint(response)
+            raise RefusedAuthenticationError(
+                f"Connection was refused. Response:\n{pprint.pformat(response)}"
+            )
 
         return AuthenticatedSession(session, public_key)
 
-    def run_until_complete(self, event_loop: asyncio.BaseEventLoop):
-        event_loop.run_until_complete(self.ws)
-
+    def start(self, loop: asyncio.BaseEventLoop):
+        self.ws = websockets.serve(
+            lambda ws, p: self.handler(ws, p),
+            self.host,
+            self.port,
+            subprotocols=["com.microsoft.minecraft.wsencrypt"],
+            ping_interval=None,
+            loop=loop,
+        )
+        loop.run_until_complete(self.ws)
+        log.debug("Started websocket server.")
