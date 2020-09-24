@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 import asyncio
 
@@ -21,7 +23,7 @@ class Subscription:
     Subscribes to a Publisher and returns the subscribe queue.
     """
 
-    def __init__(self, publisher: Type[Publisher]):
+    def __init__(self, publisher: Publisher):
         self.publisher = publisher
         self.queue = asyncio.Queue()
 
@@ -41,7 +43,6 @@ class Publisher:
         for queue in self.subscriptions:
             queue.put_nowait(message)
 
-    def subscription(self) -> Type[Subscription]:
+    def subscription(self) -> Subscription:
         sub = Subscription(self)
         return sub
-

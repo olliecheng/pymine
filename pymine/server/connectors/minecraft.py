@@ -67,7 +67,7 @@ class MinecraftConnector(Connector):
         log.debug("Received connection request.")
 
         # Check only one connection occurs at a time
-        if websocket.sockets != 1:
+        if self.ws.sockets != 1:
             # this connection must be the extra socket!
             log.error("Received second connection request, this has been refused.")
             return
@@ -92,7 +92,8 @@ class MinecraftConnector(Connector):
         )
 
         _done, pending = await asyncio.wait(
-            [receive_task, send_task], return_when=asyncio.FIRST_COMPLETED,
+            [receive_task, send_task],
+            return_when=asyncio.FIRST_COMPLETED,
         )
 
         for task in pending:
@@ -133,7 +134,8 @@ class MinecraftConnector(Connector):
         authentication_payload = {
             "body": {
                 "commandLine": 'enableencryption "{public_key}" "{salt}"'.format(
-                    public_key=session.b64_public_key, salt=session.b64_salt,
+                    public_key=session.b64_public_key,
+                    salt=session.b64_salt,
                 ),
                 "version": 1,
             },
@@ -168,7 +170,7 @@ class MinecraftConnector(Connector):
         return AuthenticatedSession(session, public_key)
 
     def start(self, loop: asyncio.BaseEventLoop):
-        self.ws = websockets.serve(
+        ws_future = websockets.serve(
             lambda ws, p: self.handler(ws, p),
             self.host,
             self.port,
@@ -176,5 +178,6 @@ class MinecraftConnector(Connector):
             ping_interval=None,
             loop=loop,
         )
-        loop.run_until_complete(self.ws)
-        log.debug("Started websocket server.")
+        self.ws = loop.run_until_complete(ws_future)
+
+        log.info(f"Started Minecraft connector on {self.host}:{self.port}")

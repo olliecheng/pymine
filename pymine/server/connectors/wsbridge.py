@@ -41,15 +41,13 @@ class WSBridgeConnector(Connector):
         self.recv_queue = recv_queue
 
     def start(self, loop: asyncio.BaseEventLoop):
-        loop.create_task(
-            self.broadcast_announcer(self.broadcast_queues, self.send_queue)
-        )
         self.ws = websockets.serve(
             lambda ws, p: self.handler(ws, p), self.host, self.port, loop=loop
         )
 
         loop.run_until_complete(self.ws)
         log.debug("Started websocket server.")
+        log.info(f"Started websocket bridge on {self.host}:{self.port}")
 
     async def handler(self, websocket, path):
         "Handles individual websocket requests."
