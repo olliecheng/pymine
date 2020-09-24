@@ -19,7 +19,7 @@ from typing import List, Dict, Tuple, Sequence
 from pymine.utils.logging import getLogger
 from pymine.server.encryption import EncryptionSession, AuthenticatedSession
 
-from .template import Connector
+from .base import Connector
 
 
 log = getLogger("connectors.minecraft")

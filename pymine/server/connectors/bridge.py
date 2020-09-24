@@ -11,7 +11,7 @@ import websockets
 
 from typing import List
 
-from .template import Connector
+from .base import Connector
 
 from pymine.utils.logging import getLogger
 
