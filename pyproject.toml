@@ -10,6 +10,7 @@ python = "^3.6.1"
 websockets = "^8.1"
 pycryptodome = "^3.9.8"
 colorlog = "^4.2.1"
+aiohttp = "^3.6.2"
 
 [tool.poetry.dev-dependencies]
 
@@ -25,3 +26,4 @@ build-backend = "poetry.masonry.api"
 name = "pypi_with_cert"
 url = "https://pypi.org/project/"
 default = true
+

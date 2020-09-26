@@ -8,7 +8,12 @@ import asyncio
 
 from typing import List, Dict, Tuple, Sequence
 
-from pymine.server.connectors import MinecraftConnector, WSBridgeConnector, Publisher
+from pymine.server.connectors import (
+    MinecraftConnector,
+    WSBridgeConnector,
+    HTTPConnector,
+    Publisher,
+)
 from pymine.utils.logging import getLogger
 
 log = getLogger("main")
@@ -22,11 +27,13 @@ def start_server(port: int = 19131):
 
     minecraft_connection = MinecraftConnector(publisher, recv_queue, port=19131)
     ws_connection = WSBridgeConnector(publisher, recv_queue)
+    http_connector = HTTPConnector(publisher, recv_queue)
 
     loop = asyncio.get_event_loop()
     try:
         minecraft_connection.start(loop)
         ws_connection.start(loop)
+        http_connector.start(loop)
 
         log.debug("Starting event loop...")
         loop.run_forever()
