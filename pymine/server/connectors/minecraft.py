@@ -63,41 +63,43 @@ class MinecraftConnector(Connector):
         self.publisher = publisher
         self.recv_queue = recv_queue
 
-    async def handler(self, websocket, path):
-        log.debug("Received connection request.")
+        self.connection_lock = asyncio.Lock()
 
+    async def handler(self, websocket, path):
         # Check only one connection occurs at a time
-        if self.ws.sockets != 1:
-            # this connection must be the extra socket!
+        if self.connection_lock.locked():
             log.error("Received second connection request, this has been refused.")
             return
 
-        # Upgrade connection immediately upon connection
-        try:
-            session = await self.enable_encryption(
-                websocket, self.unauthenticated_session
+        async with self.connection_lock:
+            log.debug("Received connection request.")
+
+            # Upgrade connection immediately upon connection
+            try:
+                session = await self.enable_encryption(
+                    websocket, self.unauthenticated_session
+                )
+            except AuthenticationError as err:
+                log.error(f"Could not authenticate: {err}")
+                return
+
+            log.debug("Encrypted connection established, now listening for updates...")
+            log.info("Connected to Minecraft!")
+
+            # register tasks
+            receive_task = asyncio.ensure_future(
+                self.recv_handler(websocket, path, session, self.publisher)
             )
-        except AuthenticationError as err:
-            log.error(f"Could not authenticate: {err}")
-            return
+            send_task = asyncio.ensure_future(
+                self.send_handler(websocket, path, session, self.recv_queue)
+            )
 
-        log.debug("Encrypted connection established, now listening for updates...")
+            _done, pending = await asyncio.wait(
+                [receive_task, send_task], return_when=asyncio.FIRST_COMPLETED,
+            )
 
-        # register tasks
-        receive_task = asyncio.ensure_future(
-            self.recv_handler(websocket, path, session, self.publisher)
-        )
-        send_task = asyncio.ensure_future(
-            self.send_handler(websocket, path, session, self.recv_queue)
-        )
-
-        _done, pending = await asyncio.wait(
-            [receive_task, send_task],
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-
-        for task in pending:
-            task.cancel()
+            for task in pending:
+                task.cancel()
 
     @staticmethod
     async def recv_handler(
@@ -134,8 +136,7 @@ class MinecraftConnector(Connector):
         authentication_payload = {
             "body": {
                 "commandLine": 'enableencryption "{public_key}" "{salt}"'.format(
-                    public_key=session.b64_public_key,
-                    salt=session.b64_salt,
+                    public_key=session.b64_public_key, salt=session.b64_salt,
                 ),
                 "version": 1,
             },
