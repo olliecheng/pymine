@@ -19,7 +19,7 @@ def getLogger(name: Optional[str] = None) -> logging.Logger:
     handler = colorlog.StreamHandler()
     handler.setFormatter(
         colorlog.ColoredFormatter(
-            "%(log_color)s%(levelname)s:%(name)s:%(message)s",
+            "%(log_color)s%(levelname)s | %(name)s | %(message)s",
             log_colors={
                 "DEBUG": "white",
                 "INFO": "cyan",
