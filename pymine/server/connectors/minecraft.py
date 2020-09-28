@@ -23,6 +23,7 @@ from .base import Connector, Publisher
 
 
 log = getLogger("connectors.minecraft")
+log.setLevel("DEBUG")
 
 
 # fmt: off
@@ -71,6 +72,7 @@ class MinecraftConnector(Connector):
         if ready and self.error_handler:
             log.debug("Cancelling uninitiated_handler")
             self.error_handler.cancel()
+            self.error_handler = None
         else:
             self.error_handler = asyncio.create_task(
                 self.uninitiated_handler(self.recv_queue, self.publisher)
@@ -86,7 +88,7 @@ class MinecraftConnector(Connector):
         while True:
             request_str: str = await recv_queue.get()
             request = json.loads(request_str)
-            log.debug(f"Received request: {request}")
+            log.debug(f"Received request while uninitiated: {request}")
 
             response_payload = {
                 "body": {"error": "minecraft-not-connected"},
@@ -100,44 +102,53 @@ class MinecraftConnector(Connector):
             publisher.publish(json.dumps(response_payload))
 
     async def handler(self, websocket, path):
-        # Check only one connection occurs at a time
-        if self.connection_lock.locked():
-            log.error("Received second connection request, this has been refused.")
-            return
-
-        async with self.connection_lock:
-            log.debug("Received connection request.")
-
-            # Upgrade connection immediately upon connection
-            try:
-                session = await self.enable_encryption(
-                    websocket, self.unauthenticated_session
-                )
-            except AuthenticationError as err:
-                log.error(f"Could not authenticate: {err}")
+        try:
+            # Check only one connection occurs at a time
+            if self.connection_lock.locked():
+                log.error("Received second connection request, this has been refused.")
                 return
 
-            log.debug("Encrypted connection established, now listening for updates...")
-            log.info("Connected to Minecraft!")
+            async with self.connection_lock:
+                log.debug("Received connection request.")
 
-            await self.set_uninitiated_handler_status(True)
+                # Upgrade connection immediately upon connection
+                try:
+                    session = await self.enable_encryption(
+                        websocket, self.unauthenticated_session
+                    )
+                except AuthenticationError as err:
+                    log.error(f"Could not authenticate: {err}")
+                    return
 
-            # register tasks
-            receive_task = asyncio.ensure_future(
-                self.recv_handler(websocket, path, session, self.publisher)
-            )
-            send_task = asyncio.ensure_future(
-                self.send_handler(websocket, path, session, self.recv_queue)
-            )
+                log.debug(
+                    "Encrypted connection established, now listening for updates..."
+                )
+                log.info("Connected to Minecraft!")
 
-            _done, pending = await asyncio.wait(
-                [receive_task, send_task], return_when=asyncio.FIRST_COMPLETED,
-            )
+                await self.set_uninitiated_handler_status(True)
 
-            # should never need to run...
-            # TODO: close queues on completion
-            for task in pending:
+                # register tasks
+                receive_task = asyncio.ensure_future(
+                    self.recv_handler(websocket, path, session, self.publisher)
+                )
+                send_task = asyncio.ensure_future(
+                    self.send_handler(websocket, path, session, self.recv_queue)
+                )
+
+                _done, pending = await asyncio.wait(
+                    (receive_task, send_task), return_when=asyncio.FIRST_COMPLETED,
+                )
+
+                for task in pending:
+                    task.cancel()
+        except websockets.exceptions.ConnectionClosedError as err:
+            log.debug(f"ConnectionClosedError in handler: {err}")
+            # close everything
+            for task in (receive_task, send_task):
                 task.cancel()
+
+        await self.set_uninitiated_handler_status(False)
+        log.info("Disconnected from Minecraft.")
 
     @staticmethod
     async def recv_handler(
@@ -145,10 +156,16 @@ class MinecraftConnector(Connector):
     ):
         "Processes responses from Minecraft."
 
-        async for message_encrypted in websocket:
-            message = session.decrypt(message_encrypted)
+        try:
+            async for message_encrypted in websocket:
+                message = session.decrypt(message_encrypted)
 
-            publisher.publish(message)
+                log.debug(f"Received request while authenticated: {message}")
+
+                publisher.publish(message)
+        except websockets.exceptions.ConnectionClosedError as err:
+            log.debug(f"ConnectionClosedError in recv_handler: {err}")
+            return
 
     @staticmethod
     async def send_handler(
@@ -205,6 +222,8 @@ class MinecraftConnector(Connector):
             raise RefusedAuthenticationError(
                 f"Connection was refused. Response:\n{pprint.pformat(response)}"
             )
+
+        log.debug(f"Received client pubkey {public_key}")
 
         return AuthenticatedSession(session, public_key)
 
