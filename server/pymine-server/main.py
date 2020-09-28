@@ -8,13 +8,13 @@ import asyncio
 
 from typing import List, Dict, Tuple, Sequence
 
-from pymine.server.connectors import (
+from .connectors import (
     MinecraftConnector,
     WSBridgeConnector,
     HTTPConnector,
     Publisher,
 )
-from pymine.utils.logging import getLogger
+from .utils.logging import getLogger
 
 log = getLogger("main")
 

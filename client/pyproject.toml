@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "pymine-client"
+version = "0.1.0"
+description = "Server exposing a programmatic interface to Minecraft: Education Edition"
+authors = ["Ollie Cheng <denosawr@vivaldi.net>"]
+license = "MIT"
+
+packages = [
+    { include="pymine", from="." },
+]
+
+[tool.poetry.dependencies]
+python = "^3.5.0"
+requests = "^2.24.0"
+
+[tool.poetry.scripts]
+run = "pymine-server:start_server"
+server = "pymine-server:start_server"
+
+[[tool.poetry.source]]
+name = "pypi_with_cert"
+url = "https://pypi.org/project/"
+default = true
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+

@@ -16,10 +16,10 @@ import websockets
 
 from typing import List, Dict, Tuple, Sequence
 
-from pymine.utils.logging import getLogger
-from pymine.server.encryption import EncryptionSession, AuthenticatedSession
+from ..utils.logging import getLogger
+from ..utils.encryption import EncryptionSession, AuthenticatedSession
 
-from .base import Connector, Publisher
+from ..base import Connector, Publisher
 
 
 log = getLogger("connectors.minecraft")

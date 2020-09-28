@@ -11,9 +11,8 @@ import websockets
 
 from typing import List
 
-from .base import Connector, Publisher
-
-from pymine.utils.logging import getLogger
+from ..base import Connector, Publisher
+from ..utils.logging import getLogger
 
 log = getLogger("connectors.bridge")
 
@@ -60,8 +59,7 @@ class WSBridgeConnector(Connector):
         )
 
         _done, pending = await asyncio.wait(
-            [command_task, subscription_task],
-            return_when=asyncio.FIRST_COMPLETED,
+            [command_task, subscription_task], return_when=asyncio.FIRST_COMPLETED,
         )
 
         for task in pending:

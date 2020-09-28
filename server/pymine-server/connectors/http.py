@@ -4,8 +4,8 @@ import uuid
 import time
 from aiohttp import web
 
-from pymine.utils.logging import getLogger
-from .base import Connector, Publisher
+from ..utils.logging import getLogger
+from ..base import Connector, Publisher
 
 log = getLogger("connectors.http")
 
