@@ -65,6 +65,40 @@ class MinecraftConnector(Connector):
 
         self.connection_lock = asyncio.Lock()
 
+        self.error_handler = None
+
+    async def set_uninitiated_handler_status(self, ready: bool):
+        if ready and self.error_handler:
+            log.debug("Cancelling uninitiated_handler")
+            self.error_handler.cancel()
+        else:
+            self.error_handler = asyncio.create_task(
+                self.uninitiated_handler(self.recv_queue, self.publisher)
+            )
+
+    async def uninitiated_handler(
+        self, recv_queue: asyncio.Queue, publisher: Publisher
+    ):
+        "Processes requests to Minecraft before a connection is made i.e. denies the requests."
+
+        log.debug("Starting uninitiated_handler")
+
+        while True:
+            request_str: str = await recv_queue.get()
+            request = json.loads(request_str)
+            log.debug(f"Received request: {request}")
+
+            response_payload = {
+                "body": {"error": "minecraft-not-connected"},
+                "header": {
+                    "messagePurpose": "commandResponse",
+                    "requestId": request["header"]["requestId"],
+                    "version": 1,
+                },
+            }
+
+            publisher.publish(json.dumps(response_payload))
+
     async def handler(self, websocket, path):
         # Check only one connection occurs at a time
         if self.connection_lock.locked():
@@ -86,6 +120,8 @@ class MinecraftConnector(Connector):
             log.debug("Encrypted connection established, now listening for updates...")
             log.info("Connected to Minecraft!")
 
+            await self.set_uninitiated_handler_status(True)
+
             # register tasks
             receive_task = asyncio.ensure_future(
                 self.recv_handler(websocket, path, session, self.publisher)
@@ -98,6 +134,8 @@ class MinecraftConnector(Connector):
                 [receive_task, send_task], return_when=asyncio.FIRST_COMPLETED,
             )
 
+            # should never need to run...
+            # TODO: close queues on completion
             for task in pending:
                 task.cancel()
 
@@ -180,5 +218,6 @@ class MinecraftConnector(Connector):
             loop=loop,
         )
         self.ws = loop.run_until_complete(ws_future)
+        loop.run_until_complete(self.set_uninitiated_handler_status(ready=False))
 
         log.info(f"Started Minecraft connector on {self.host}:{self.port}")

@@ -54,7 +54,7 @@ class HTTPConnector(Connector):
                     if time.time() - start_time > TIMEOUT:
                         raise asyncio.TimeoutError
 
-                    # get from queue with 10s timeout
+                    # get from queue with timeout
                     response_raw: str = await asyncio.wait_for(
                         queue.get(), timeout=TIMEOUT
                     )
