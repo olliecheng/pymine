@@ -26,6 +26,22 @@ url = "https://pypi.org/project"
 
 [[package]]
 category = "main"
+description = "Python 3.5+ library for integration testing and data validation through configurable and optional runtime type hint enforcement."
+name = "enforce"
+optional = false
+python-versions = "*"
+version = "0.3.4"
+
+[package.dependencies]
+wrapt = "*"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
 description = "Internationalized Domain Names in Applications (IDNA)"
 name = "idna"
 optional = false
@@ -78,14 +94,29 @@ reference = "pypi_with_cert"
 type = "legacy"
 url = "https://pypi.org/project"
 
+[[package]]
+category = "main"
+description = "Module for decorators, wrappers and monkey patching."
+name = "wrapt"
+optional = false
+python-versions = "*"
+version = "1.12.1"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
 [metadata]
-content-hash = "ffe0ccf8ff41f91767cfe6d9e1dca48c2991d758831b3a6ce3c559069c1cdb71"
+content-hash = "82858ac8ff4a39cfd4d67ec08d5a2261f2c8bc2971de42adaa9368d65ab3e806"
 lock-version = "1.0"
-python-versions = "^3.5.0"
+python-versions = "^3.5.3"
 
 [metadata.files]
 certifi = []
 chardet = []
+enforce = []
 idna = []
 requests = []
 urllib3 = []
+wrapt = []

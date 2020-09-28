@@ -10,12 +10,12 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.5.0"
+python = "^3.5.3"
 requests = "^2.24.0"
+enforce = "^0.3.4"
 
 [tool.poetry.scripts]
-run = "pymine-server:start_server"
-server = "pymine-server:start_server"
+client = "pymine:example"
 
 [[tool.poetry.source]]
 name = "pypi_with_cert"

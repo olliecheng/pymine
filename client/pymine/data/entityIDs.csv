@@ -1,0 +1,83 @@
+﻿numeric_id,namespaced_id,name
+56,agent,Agent
+61,armor_stand,Armor stand
+80,arrow,Arrow
+19,bat,Bat
+43,blaze,Blaze
+90,boat,Boat
+75,cat,Cat
+40,cave_spider,Cave Spider
+98,chest_minecart,Minecart with Chest
+10,chicken,Chicken
+112,cod,Cod
+100,command_block_minecart,Minecart with Command Block
+11,cow,Cow
+33,creeper,Creeper
+31,dolphin,Dolphin
+24,donkey,Donkey
+110,drowned,Drowned
+82,egg,Thrown egg
+50,elder_guardian,Elder Guardian
+120,elder_guardian_ghost,Elder Guardian Ghost
+71,ender_crystal,Ender Crystal
+53,ender_dragon,Ender Dragon
+38,enderman,Enderman
+55,endermite,Endermite
+103,evocation_fang,Evocation fangs
+104,evocation_illager,Evoker
+72,fireworks_rocket,Firework rocket
+121,fox,Fox
+41,ghast,Ghast
+49,guardian,Guardian
+96,hopper_minecart,Minecart with Hopper
+23,horse,Horse
+47,husk,Husk
+20,iron_golem,Iron Golem
+88,leash_knot,Leash knot
+93,lightning_bolt,Lightning Bolt
+29,llama,Llama
+42,magma_cube,Magma Cube
+84,minecart,Minecart
+16,mooshroom,Mooshroom
+25,mule,Mule
+22,ocelot,Ocelot
+113,panda,Panda
+30,parrot,Parrot
+58,phantom,Phantom
+12,pig,Pig
+114,pillager,Pillager
+28,polar_bear,Polar Bear
+108,pufferfish,Pufferfish
+18,rabbit,Rabbit
+59,ravager,Ravager
+109,salmon,Salmon
+13,sheep,Sheep
+54,shulker,Shulker
+39,silverfish,Silverfish
+34,skeleton,Skeleton
+26,skeleton_horse,Skeleton Horse
+37,slime,Slime
+21,snow_golem,Snow Golem
+81,snowball,Thrown snowball
+35,spider,Spider
+86,splash_potion,Thrown splash potion
+17,squid,Squid
+46,stray,Stray
+65,tnt,TNT
+97,tnt_minecart,Minecart with TNT
+111,tropicalfish,Tropical Fish
+74,turtle,Turtle
+105,vex,Vex
+15,villager,Villager
+57,vindicator,Vindicator
+118,wandering_trader,Wandering Trader
+45,witch,Witch
+52,wither,Wither
+48,wither_skeleton,Wither Skeleton
+14,wolf,Wolf
+68,xp_bottle,Bottle O' Enchanting
+69,xp_orb,Experience Orb
+32,zombie,Zombie
+27,zombie_horse,Zombie Horse
+44,zombie_villager,Zombie Villager
+36,zombie_pigman,Zombie Pigman
