@@ -15,7 +15,7 @@ class Relative:
 Coordinate = Union[int, Relative, str]
 
 
-class Position:
+class Pos:
     def __init__(
         self,
         x: Optional[Coordinate] = None,
@@ -35,6 +35,9 @@ class Position:
 
     def __str__(self) -> str:
         return self.coords
+
+
+Position = Union[Pos, str]
 
 
 class Target:
