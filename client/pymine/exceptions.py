@@ -13,23 +13,35 @@ class CommandError(QuietError):
         self.code = code
 
 
+class EventTimeout(QuietError):
+    pass
+
+
 def quiet_hook(kind, message, traceback):
     if QuietError in kind.__bases__:
         stack = tb.extract_tb(traceback)
         last_file = stack[-1].filename
 
-        modified_stack = [x for x in stack if x.filename != last_file]
+        def filter_func(x) -> bool:
+            for v in (last_file, "asyncio/base_events.py", "asyncio/runners.py"):
+                if v in x.filename:
+                    return False
+            return True
+
+        modified_stack = [x for x in stack if filter_func(x)]
 
         sys.stderr.write("Traceback (most recent call last):\n")
 
         for l in tb.format_list(modified_stack):
             sys.stderr.write(l)
 
-        sys.stderr.write(
-            "pymine.exceptions.{0}: {1} (error code {2})\n".format(
-                kind.__name__, message.message, message.code
-            )
-        )
+        err = ""
+        if isinstance(message, CommandError):
+            err = f"{message.message} (error code {message.code})"
+        elif isinstance(message, EventTimeout):
+            err = "Event timed out."
+
+        sys.stderr.write(f"pymine.exceptions.{kind.__name__}: {err}")
 
         sys.stderr.flush()
     else:
