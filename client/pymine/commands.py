@@ -1,5 +1,6 @@
 from .datatypes import Target, Position
 from .data import mobs, items, blocks
+from .exceptions import CommandError
 
 import requests
 import sys
@@ -14,7 +15,7 @@ def execute_command(command):
     # remove defaults
     command = command.rstrip()
 
-    print(command)
+    # print(command)
     try:
         r = requests.get(f"http://127.0.0.1:8080/{command}")
     except requests.exceptions.ConnectionError:
@@ -35,6 +36,11 @@ def execute_command(command):
 
         sys.exit(2)  # he does it again. god damn it
 
+    if response["statusCode"]:
+        raise CommandError(
+            message=response["statusMessage"], code=response["statusCode"]
+        )
+
     return response
 
 
@@ -46,7 +52,7 @@ def clone(
     cloneMode: str = DEFAULT,
     tileName: str = DEFAULT,
 ):
-    return execute_command(f"give {begin} {end} {destination} {maskMode} {cloneMode}")
+    return execute_command(f"clone {begin} {end} {destination} {maskMode} {cloneMode}")
 
 
 def executeasother(target: Target, position: Position, command: str):
