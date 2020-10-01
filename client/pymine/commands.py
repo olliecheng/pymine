@@ -87,6 +87,10 @@ def kill(target: str):
     return execute_command(f"kill {target}")
 
 
+def say(message: str):
+    return execute_command(f"say {message}")
+
+
 def setblock(
     position: Position,
     tileName: str,
