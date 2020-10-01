@@ -8,6 +8,7 @@ from ..utils.logging import getLogger
 from ..base import Connector, Publisher
 
 log = getLogger("connectors.http")
+# log.setLevel("DEBUG")
 
 
 class HTTPConnector(Connector):
@@ -24,6 +25,8 @@ class HTTPConnector(Connector):
         self.port = port
 
     async def handler(self, request: web.Request):
+        start_time = time.time()
+
         command = request.match_info["command"]
 
         # unique requestID for this command
@@ -46,7 +49,6 @@ class HTTPConnector(Connector):
         with self.publisher.subscription() as queue:
             await self.recv_queue.put(json.dumps(payload))
 
-            start_time = time.time()
             TIMEOUT = 5
             try:
                 while True:
@@ -66,6 +68,8 @@ class HTTPConnector(Connector):
                 log.debug("Timeout error...")
                 response = {"error": "No response received."}
 
+        time_taken = time.time() - start_time
+        log.debug(f"Processed request in {time_taken:.2f}s.")
         return web.Response(text=json.dumps(response))
 
     def start(self, loop: asyncio.BaseEventLoop):
