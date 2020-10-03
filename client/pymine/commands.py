@@ -3,22 +3,41 @@ from .data import mobs, items, blocks
 from .exceptions import CommandError
 
 import requests
+import aiohttp
+import asyncio
 import sys
+import atexit
 
-from typing import Union
+from typing import Union, Iterable
 
 
 DEFAULT = ""
 
+session = None
 
-def execute_command(command):
+
+def cleanup_session():
+    if session:
+        asyncio.get_event_loop().run_until_complete(session.close())
+
+
+atexit.register(cleanup_session)
+
+
+async def async_execute_command(command: str, catch_errors: bool = True):
+    global session
+
     # remove defaults
     command = command.rstrip()
 
+    if not session:
+        session = aiohttp.ClientSession()
+
     # print(command)
     try:
-        r = requests.get(f"http://127.0.0.1:8080/{command}")
-    except requests.exceptions.ConnectionError:
+        # r = requests.get(f"http://127.0.0.1:8080/{command}")
+        r = await session.get(f"http://127.0.0.1:8080/{command}")
+    except aiohttp.client_exceptions.ClientConnectorError:
         # server not running!
         print(
             "Server not running. Make sure that the Pymine Server application is open!"
@@ -28,7 +47,7 @@ def execute_command(command):
         # oh lord jesus what are you doing
         # please stop it
 
-    response = r.json()["body"]
+    response = (await r.json())["body"]
     if response.get("error", "") == "minecraft-not-connected":
         print(
             "Minecraft not connected to the server. Make sure you've run `/connect localhost:19131` from inside the Minecraft Client."
@@ -36,12 +55,37 @@ def execute_command(command):
 
         sys.exit(2)  # he does it again. god damn it
 
-    if response["statusCode"]:
+    if catch_errors and response["statusCode"]:
         raise CommandError(
             message=response["statusMessage"], code=response["statusCode"]
         )
 
     return response
+
+
+def execute_command(command: str, catch_errors: bool = True):
+    return asyncio.get_event_loop().run_until_complete(
+        async_execute_command(command, catch_errors)
+    )
+
+
+async def async_execute_commands_simultaneously(
+    commands: Iterable[str], catch_errors: bool = True
+):
+    futures = []
+
+    for command in commands:
+        task = async_execute_command(command, catch_errors)
+        futures.append(task)
+
+    results = await asyncio.gather(*futures)
+    return results
+
+
+def execute_commands_simultaneously(commands: Iterable[str], catch_errors: bool = True):
+    return asyncio.get_event_loop().run_until_complete(
+        async_execute_commands_simultaneously(commands, catch_errors)
+    )
 
 
 def clone(
