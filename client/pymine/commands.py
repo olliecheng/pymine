@@ -109,11 +109,22 @@ def fill(
     tileName: str,
     tileData: int = DEFAULT,
     oldBlockHandling: str = DEFAULT,
+):
+    return execute_command(
+        f"fill {from_} {to} {tileName} {tileData} {oldBlockHandling}"
+    )
+
+
+def replace(
+    from_: Position,
+    to: Position,
+    tileName: str,
+    tileData: int = DEFAULT,
     replaceTileName: str = DEFAULT,
     replaceDataValue: str = DEFAULT,
 ):
     return execute_command(
-        f"fill {from_} {to} {tileName} {tileData} {oldBlockHandling} {replaceTileName} {replaceDataValue}"
+        f"fill {from_} {to} {tileName} {tileData} replace {replaceTileName} {replaceDataValue}"
     )
 
 
@@ -142,7 +153,8 @@ def setblock(
     oldBlockHandling: str = DEFAULT,
 ):
     return execute_command(
-        f"setblock {position} {tileName} {tileData} {oldBlockHandling}"
+        f"setblock {position} {tileName} {tileData} {oldBlockHandling}",
+        catch_errors=False,
     )
 
 
@@ -151,7 +163,9 @@ def summon(entityType: str, spawnPos: Position):
 
 
 def testforblock(position: Position, tileName: str, dataValue: int = DEFAULT):
-    return execute_command(f"testforblock {position} {tileName} {dataValue}")
+    return execute_command(
+        f"testforblock {position} {tileName} {dataValue}", catch_errors=False
+    )["matches"]
 
 
 def testforblocks(
