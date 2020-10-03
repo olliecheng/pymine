@@ -49,8 +49,6 @@ async def async_wait_for_event(
                     response_raw: str = (
                         await asyncio.wait_for(ws.recv(), timeout=time_left)
                     ).decode()
-
-                    print("ok")
                 else:
                     response_raw = (await ws.recv()).decode()
 
