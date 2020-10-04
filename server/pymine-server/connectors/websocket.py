@@ -15,6 +15,7 @@ from ..base import Connector, Publisher
 from ..utils.logging import getLogger
 
 log = getLogger("connectors.bridge")
+log.setLevel("DEBUG")
 
 
 class WSBridgeConnector(Connector):
@@ -51,19 +52,22 @@ class WSBridgeConnector(Connector):
     async def handler(self, websocket, path):
         "Handles individual websocket requests."
 
-        command_task = asyncio.ensure_future(
-            self.command_handler(websocket, path, self.recv_queue)
-        )
-        subscription_task = asyncio.ensure_future(
-            self.subscription_handler(websocket, path, self.publisher)
-        )
+        try:
+            command_task = asyncio.ensure_future(
+                self.command_handler(websocket, path, self.recv_queue)
+            )
+            subscription_task = asyncio.ensure_future(
+                self.subscription_handler(websocket, path, self.publisher)
+            )
 
-        _done, pending = await asyncio.wait(
-            [command_task, subscription_task], return_when=asyncio.FIRST_COMPLETED,
-        )
+            await websocket.wait_closed()
+        except websockets.ConnectionClosedError:
+            pass
+        finally:
+            for task in (command_task, subscription_task):
+                task.cancel()
 
-        for task in pending:
-            task.cancel()
+        log.debug("Connection closed.")
 
     @staticmethod
     async def command_handler(websocket, path, queue: asyncio.Queue):
