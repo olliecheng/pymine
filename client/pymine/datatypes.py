@@ -31,6 +31,10 @@ class Pos:
         elif len(coordinates_ls) != 3:
             raise TypeError("Must give x, y, and z coordinates.")
 
+        self.x = x
+        self.y = y
+        self.z = z
+
         self.coords = constructor or " ".join(coordinates_ls)
 
     def __str__(self) -> str:
