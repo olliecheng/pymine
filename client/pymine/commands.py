@@ -24,7 +24,7 @@ def cleanup_session():
 atexit.register(cleanup_session)
 
 
-async def async_execute_command(command: str, catch_errors: bool = True):
+async def async_execute_command(command: str, catch_errors: bool = False):
     global session
 
     # remove defaults
@@ -63,14 +63,14 @@ async def async_execute_command(command: str, catch_errors: bool = True):
     return response
 
 
-def execute_command(command: str, catch_errors: bool = True):
+def execute_command(command: str, catch_errors: bool = False):
     return asyncio.get_event_loop().run_until_complete(
         async_execute_command(command, catch_errors)
     )
 
 
 async def async_execute_commands_simultaneously(
-    commands: Iterable[str], catch_errors: bool = True
+    commands: Iterable[str], catch_errors: bool = False
 ):
     futures = []
 
@@ -82,7 +82,9 @@ async def async_execute_commands_simultaneously(
     return results
 
 
-def execute_commands_simultaneously(commands: Iterable[str], catch_errors: bool = True):
+def execute_commands_simultaneously(
+    commands: Iterable[str], catch_errors: bool = False
+):
     return asyncio.get_event_loop().run_until_complete(
         async_execute_commands_simultaneously(commands, catch_errors)
     )
@@ -107,11 +109,12 @@ def fill(
     from_: Position,
     to: Position,
     tileName: str,
-    tileData: int = DEFAULT,
+    tileData: int = 0,
     oldBlockHandling: str = DEFAULT,
 ):
     return execute_command(
-        f"fill {from_} {to} {tileName} {tileData} {oldBlockHandling}"
+        f"fill {from_} {to} {tileName} {tileData} {oldBlockHandling}",
+        catch_errors=False,
     )
 
 
@@ -119,12 +122,13 @@ def replace(
     from_: Position,
     to: Position,
     tileName: str,
-    tileData: int = DEFAULT,
+    tileData: int = 0,
     replaceTileName: str = DEFAULT,
     replaceDataValue: str = DEFAULT,
 ):
     return execute_command(
-        f"fill {from_} {to} {tileName} {tileData} replace {replaceTileName} {replaceDataValue}"
+        f"fill {from_} {to} {tileName} {tileData} replace {replaceTileName} {replaceDataValue}",
+        catch_errors=False,
     )
 
 
@@ -139,7 +143,11 @@ def give(
 
 
 def kill(target: str):
-    return execute_command(f"kill {target}")
+    return execute_command(f"kill {target}", catch_errors=False)
+
+
+def removeblock(position: Position):
+    setblock(position, blocks.air)
 
 
 def say(message: str):
