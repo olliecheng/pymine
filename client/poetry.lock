@@ -1,5 +1,68 @@
 [[package]]
 category = "main"
+description = "Async http client/server framework (asyncio)"
+name = "aiohttp"
+optional = false
+python-versions = ">=3.5.3"
+version = "3.6.2"
+
+[package.dependencies]
+async-timeout = ">=3.0,<4.0"
+attrs = ">=17.3.0"
+chardet = ">=2.0,<4.0"
+multidict = ">=4.5,<5.0"
+yarl = ">=1.0,<2.0"
+
+[package.dependencies.idna-ssl]
+python = "<3.7"
+version = ">=1.0"
+
+[package.dependencies.typing-extensions]
+python = "<3.7"
+version = ">=3.6.5"
+
+[package.extras]
+speedups = ["aiodns", "brotlipy", "cchardet"]
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
+description = "Timeout context manager for asyncio programs"
+name = "async-timeout"
+optional = false
+python-versions = ">=3.5.3"
+version = "3.0.1"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
+description = "Classes Without Boilerplate"
+name = "attrs"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "20.2.0"
+
+[package.extras]
+dev = ["coverage (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface", "sphinx", "sphinx-rtd-theme", "pre-commit"]
+docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
+tests = ["coverage (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface"]
+tests_no_zope = ["coverage (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six"]
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
 description = "Python package for providing Mozilla's CA Bundle."
 name = "certifi"
 optional = false
@@ -55,6 +118,36 @@ url = "https://pypi.org/project"
 
 [[package]]
 category = "main"
+description = "Patch ssl.match_hostname for Unicode(idna) domains support"
+marker = "python_version < \"3.7\""
+name = "idna-ssl"
+optional = false
+python-versions = "*"
+version = "1.1.0"
+
+[package.dependencies]
+idna = ">=2.0"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
+description = "multidict implementation"
+name = "multidict"
+optional = false
+python-versions = ">=3.5"
+version = "4.7.6"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
 description = "Python HTTP for Humans."
 name = "requests"
 optional = false
@@ -70,6 +163,33 @@ urllib3 = ">=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26"
 [package.extras]
 security = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)"]
 socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7)", "win-inet-pton"]
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
+description = "Python 2 and 3 compatibility utilities"
+name = "six"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+version = "1.15.0"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
+description = "Backported and Experimental Type Hints for Python 3.5+"
+marker = "python_version < \"3.8\""
+name = "typing-extensions"
+optional = false
+python-versions = "*"
+version = "3.7.4.3"
 
 [package.source]
 reference = "pypi_with_cert"
@@ -96,6 +216,35 @@ url = "https://pypi.org/project"
 
 [[package]]
 category = "main"
+description = "WebSocket client for Python. hybi13 is supported."
+name = "websocket-client"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "0.57.0"
+
+[package.dependencies]
+six = "*"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
+description = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
+name = "websockets"
+optional = false
+python-versions = ">=3.6.1"
+version = "8.1"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
+[[package]]
+category = "main"
 description = "Module for decorators, wrappers and monkey patching."
 name = "wrapt"
 optional = false
@@ -107,16 +256,47 @@ reference = "pypi_with_cert"
 type = "legacy"
 url = "https://pypi.org/project"
 
+[[package]]
+category = "main"
+description = "Yet another URL library"
+name = "yarl"
+optional = false
+python-versions = ">=3.5"
+version = "1.6.0"
+
+[package.dependencies]
+idna = ">=2.0"
+multidict = ">=4.0"
+
+[package.dependencies.typing_extensions]
+python = "<3.8"
+version = ">=3.7.4"
+
+[package.source]
+reference = "pypi_with_cert"
+type = "legacy"
+url = "https://pypi.org/project"
+
 [metadata]
-content-hash = "82858ac8ff4a39cfd4d67ec08d5a2261f2c8bc2971de42adaa9368d65ab3e806"
+content-hash = "5a22a4f7f9b412c1962eddf679eaa962bf582c200ad10cdf0e064d2ff0d07323"
 lock-version = "1.0"
-python-versions = "^3.5.3"
+python-versions = "^3.6.1"
 
 [metadata.files]
+aiohttp = []
+async-timeout = []
+attrs = []
 certifi = []
 chardet = []
 enforce = []
 idna = []
+idna-ssl = []
+multidict = []
 requests = []
+six = []
+typing-extensions = []
 urllib3 = []
+websocket-client = []
+websockets = []
 wrapt = []
+yarl = []
