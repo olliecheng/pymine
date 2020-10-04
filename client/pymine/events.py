@@ -2,6 +2,8 @@ import sys
 from .datatypes import Target, Position
 from .data import mobs, items, blocks
 from .exceptions import EventTimeout
+from . import commands
+
 
 import time
 import pprint
@@ -12,7 +14,7 @@ import asyncio
 import websockets
 import uuid
 
-from typing import Optional
+from typing import Optional, Union, Sequence
 
 
 async def async_wait_for_event(
@@ -67,7 +69,7 @@ async def async_wait_for_event(
 
                 if filter_result:
                     await complete()
-                    return response
+                    return response["body"]
 
         except asyncio.TimeoutError:
             await complete()
@@ -104,3 +106,29 @@ def wait_for_player_movement(
 
     wait_for_event("PlayerTravelled", filter_func)
 
+
+def wait_for_block_broken(
+    block_type: Union[Sequence[str], str],
+    block_coordinates: Optional[Position] = None,
+    timeout: int = 0,
+):
+    if isinstance(block_type, str):
+        block_type = [str]
+
+    async def filter_func(r):
+        if (
+            not block_coordinates
+            or not (
+                await commands.async_execute_command(
+                    f"testforblock {block_coordinates} {blocks.air}", catch_errors=False
+                )
+            )["statusCode"]
+        ) and r["properties"]["Block"] in block_type:
+            return True
+
+    result = wait_for_event("BlockBroken", filter_func, timeout=timeout)
+
+    return {
+        "block_name": result["properties"]["Block"],
+        "block_id": result["properties"]["AuxType"],
+    }
