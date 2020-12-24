@@ -23,6 +23,19 @@ url = "https://pypi.org/project"
 reference = "pypi_with_cert"
 
 [[package]]
+name = "ast-decompiler"
+version = "0.4.0"
+description = "Python module to decompile AST to Python code"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/project"
+reference = "pypi_with_cert"
+
+[[package]]
 name = "async-timeout"
 version = "3.0.1"
 description = "Timeout context manager for asyncio programs"
@@ -91,7 +104,6 @@ python-versions = "*"
 [package.source]
 type = "url"
 url = "https://files.pythonhosted.org/packages/bc/a9/01ffebfb562e4274b6487b4bb1ddec7ca55ec7510b22e4c51f14098443b8/chardet-3.0.4-py2.py3-none-any.whl"
-
 [[package]]
 name = "idna"
 version = "2.10"
@@ -234,10 +246,11 @@ reference = "pypi_with_cert"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9.0"
-content-hash = "8c8b8f38180e93d3613b6bb5645538fe0ee73f99f71bafcdf6fdf9372d551d02"
+content-hash = "6fde6faf2d949da794d0faea5b2a888db9d1b14bba68229759b02408c6370148"
 
 [metadata.files]
 aiohttp = []
+ast-decompiler = []
 async-timeout = []
 attrs = []
 cchardet = []

@@ -1,5 +1,5 @@
 from .datatypes import Target, Position
-from .data import mobs, items, blocks
+from .data import entities, items, blocks
 from .exceptions import CommandError
 
 import requests
@@ -121,13 +121,13 @@ def fill(
 def replace(
     from_: Position,
     to: Position,
-    tileName: str,
-    tileData: int = 0,
-    replaceTileName: str = DEFAULT,
-    replaceDataValue: str = DEFAULT,
+    newTileName: str,
+    tileNameToReplace: str = DEFAULT,
+    newTileData: int = 0,
+    replacedTileDataValue: str = DEFAULT,
 ):
     return execute_command(
-        f"fill {from_} {to} {tileName} {tileData} replace {replaceTileName} {replaceDataValue}",
+        f"fill {from_} {to} {newTileName} {newTileData} replace {tileNameToReplace} {replacedTileDataValue}",
         catch_errors=False,
     )
 
@@ -135,7 +135,7 @@ def replace(
 def give(
     item_name: str,
     *,
-    target: Target = Target.NearestPlayer,
+    target: Target = entities.player_nearest,
     amount: int = 1,
     data: int = 0,
 ):

@@ -1,6 +1,6 @@
 import sys
 from .datatypes import Target, Position
-from .data import mobs, items, blocks
+from .data import entities, items, blocks
 from .exceptions import EventTimeout
 from . import commands
 

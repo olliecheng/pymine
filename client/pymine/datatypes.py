@@ -1,18 +1,20 @@
 from __future__ import annotations
-from typing import Optional, Union, List
+from typing import Optional, Union
 
-from . import datavalues
+import builtins
+
+Numeric = Union[int, float]
 
 
 class Relative:
-    def __init__(self, val: int):
+    def __init__(self, val: Numeric):
         self.val = val
 
     def __str__(self) -> str:
-        return f"^{self.val}"
+        return f"~{self.val}"
 
 
-Coordinate = Union[int, Relative, str]
+Coordinate = Union[Numeric, Relative, str]
 
 
 class Pos:
@@ -40,11 +42,22 @@ class Pos:
     def __str__(self) -> str:
         return self.coords
 
+    def translate(self, x_trans: int = 0, y_trans: int = 0, z_trans: int = 0) -> Pos:
+        try:
+            for v in (self.x, self.y, self.z):
+                assert isinstance(v, int)
+                if isinstance(v, str):
+                    raise Exception("Translation only works with exact values.")
+        except Exception:
+            return
+
+        return Pos(self.x + x_trans, self.y + y_trans, self.z + z_trans)
+
 
 Position = Union[Pos, str]
 
 
-class Target:
+class BaseTarget:
     NearestPlayer = "@p"
     RandomPlayer = "@r"
     AllPlayers = "@a"
@@ -62,9 +75,15 @@ class Target:
         distance_max: Optional[int] = None,
         experience_level_min: Optional[int] = None,
         experience_level_max: Optional[int] = None,
-        type: Optional[Union[List[str], str]] = None,
+        type: Optional[Union[list[str], str]] = None,
     ):
-        # hacky asf
+        self.type = type
+
+        # just to make pyright shut up about unused variable access...
+        gamemode, x, y, z, distance_min, distance_max, experience_level_min, experience_level_max, type
+
+        # retrieves all parameters and collects them in a dict
+        # similar to **params, but features type hinting
         params = {k: v for k, v in locals().items() if not k in {"selector", "self"}}
 
         trait_lookup = {
@@ -79,17 +98,20 @@ class Target:
             "type": "type",
         }
 
-        self.arguments = [
-            f"{trait_lookup[k]}={v}" for k, v in params.items() if v != None
-        ]
-
         self.arguments = []
         for k, v in params.items():
             if v == None:
                 continue
 
             trait_name = trait_lookup[k]
-            if __builtins__["type"](v) == list:
+
+            # notice how `type` is an argument for this class' constructor.
+            # in order to use the `type()` function, we have to reference builtins.
+            # this is because the intended target for this library is
+            # learners and beginners, who I feel would be confused by an
+            # alternative name parameter avoiding namespace collisions,
+            # such as type_.
+            if builtins.type(v) == list:
                 for j in v:
                     self.arguments.append(f"{trait_name}={j}")
             else:
@@ -99,3 +121,6 @@ class Target:
 
     def __str__(self) -> str:
         return f"{self.selector}[{','.join(self.arguments)}]"
+
+
+Target = Union[BaseTarget, str]
