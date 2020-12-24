@@ -9,7 +9,7 @@ from .events import *
 
 from .ast_transform import (
     main,
-    get_caller_filename,
+    TransformError,
 )
 
 import inspect as _inspect
@@ -17,4 +17,7 @@ import re as _re
 
 
 # print(_filename)
-main()
+try:
+    main()
+except TransformError:
+    pass

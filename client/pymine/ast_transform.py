@@ -21,6 +21,10 @@ log = logging.getLogger("ast_transform")
 log.setLevel(logging.DEBUG if "--debug" in sys.argv else logging.WARN)
 
 
+class TransformError(Exception):
+    pass
+
+
 # pymine initialisation hook
 # provides a global variable which points to a Relative class.
 # overwrites ~ operator to provide a Relative coordinate
@@ -138,20 +142,23 @@ def run_transform(filename: Optional[str] = None) -> int:
 
     global log
 
-    if filename is None:
-        filename = get_caller_filename()
+    try:
+        if filename is None:
+            filename = get_caller_filename()
 
-    # if 1 + 2 == 3:
-    #     raise Exception
+        log.info("Reading source file from %s...", filename)
+        with open(filename) as source:
+            text = source.read()
+            tree = ast.parse(text)
 
-    log.info("Reading source file from %s...", filename)
-    with open(filename) as source:
-        text = source.read()
-        tree = ast.parse(text)
-
-    log.info("Transforming tree...")
-    transformed_tree = transform_AST(tree)
-    log.debug(decompile_AST(transformed_tree))
+        log.info("Transforming tree...")
+        transformed_tree = transform_AST(tree)
+        log.debug(decompile_AST(transformed_tree))
+    except StopIteration:
+        raise TransformError
+    except Exception as err:
+        traceback.print_exc()
+        raise TransformError
 
     log.info("Executing init hook...")
     exec(INIT_HOOK_CODE, globals())
