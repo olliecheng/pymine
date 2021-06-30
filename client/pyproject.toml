@@ -23,7 +23,8 @@ cchardet = "^2.1.7"
 ast-decompiler = "^0.4.0"
 
 [tool.poetry.scripts]
-client = "pymine:example"
+# client = "client:example"
+client = "example:example"
 
 [[tool.poetry.source]]
 name = "pypi_with_cert"

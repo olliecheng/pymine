@@ -1,17 +1,22 @@
-from .datatypes import Target, Position
+from .datatypes import Target, Position, BaseTarget
 from .data import entities, items, blocks
+
 from .exceptions import CommandError
 
 import requests
 import aiohttp
+import aiohttp.client_exceptions
 import asyncio
 import sys
 import atexit
 
-from typing import Union, Iterable
+from typing import Union, Iterable, Optional, Any
 
 
 DEFAULT = ""
+OptionalInt = Union[str, int]
+OptionalStr = str
+
 
 session = None
 
@@ -94,9 +99,9 @@ def clone(
     begin: Position,
     end: Position,
     destination: Position,
-    maskMode: str = DEFAULT,
-    cloneMode: str = DEFAULT,
-    tileName: str = DEFAULT,
+    maskMode: OptionalStr = DEFAULT,
+    cloneMode: OptionalStr = DEFAULT,
+    tileName: OptionalStr = DEFAULT,
 ):
     return execute_command(f"clone {begin} {end} {destination} {maskMode} {cloneMode}")
 
@@ -110,7 +115,7 @@ def fill(
     to: Position,
     tileName: str,
     tileData: int = 0,
-    oldBlockHandling: str = DEFAULT,
+    oldBlockHandling: OptionalStr = DEFAULT,
 ):
     return execute_command(
         f"fill {from_} {to} {tileName} {tileData} {oldBlockHandling}",
@@ -122,9 +127,9 @@ def replace(
     from_: Position,
     to: Position,
     newTileName: str,
-    tileNameToReplace: str = DEFAULT,
+    tileNameToReplace: OptionalStr = DEFAULT,
     newTileData: int = 0,
-    replacedTileDataValue: str = DEFAULT,
+    replacedTileDataValue: OptionalStr = DEFAULT,
 ):
     return execute_command(
         f"fill {from_} {to} {newTileName} {newTileData} replace {tileNameToReplace} {replacedTileDataValue}",
@@ -157,8 +162,8 @@ def say(message: str):
 def setblock(
     position: Position,
     tileName: str,
-    tileData: int = DEFAULT,
-    oldBlockHandling: str = DEFAULT,
+    tileData: OptionalInt = DEFAULT,
+    oldBlockHandling: OptionalStr = DEFAULT,
 ):
     return execute_command(
         f"setblock {position} {tileName} {tileData} {oldBlockHandling}",
@@ -166,18 +171,35 @@ def setblock(
     )
 
 
-def summon(entityType: str, spawnPos: Position):
+def summon(entityType: Target, spawnPos: Position):
+    if isinstance(entityType, BaseTarget):
+        if entityType.selector != "@e":
+            raise CommandError(message="Can only summon entities!", code=0)
+        elif isinstance(entityType.type, list):
+            if len(entityType.type) > 1:
+                raise CommandError(
+                    message="Target entity can only have 1 type.", code=0
+                )
+            entityType = entityType.type[0]
+        else:
+            entityType = str(entityType.type)
+
     return execute_command(f"summon {entityType} {spawnPos}")
 
 
-def testforblock(position: Position, tileName: str, dataValue: int = DEFAULT):
+def testforblock(position: Position, tileName: str, dataValue: OptionalInt = DEFAULT):
+    # print(
+    #     execute_command(
+    #         f"testforblock {position} {tileName} {dataValue}", catch_errors=False
+    #     )
+    # )
     return execute_command(
         f"testforblock {position} {tileName} {dataValue}", catch_errors=False
     )["matches"]
 
 
 def testforblocks(
-    begin: Position, end: Position, destination: Position, mode: str = DEFAULT
+    begin: Position, end: Position, destination: Position, mode: OptionalStr = DEFAULT
 ):
     return execute_command(f"testforblocks {begin} {end} {destination} {mode}")
 
@@ -189,11 +211,11 @@ def timeset(time: Union[str, int]):
 def teleport(
     target: Target,
     destination: Union[Position, Target],
-    xrot: int = DEFAULT,
-    yrot: int = DEFAULT,
+    xrot: OptionalInt = DEFAULT,
+    yrot: OptionalInt = DEFAULT,
 ):
     return execute_command(f"teleport {target} {destination} {yrot} {xrot}")
 
 
-def weather(type: str, duration: int = DEFAULT):
+def weather(type: str, duration: OptionalInt = DEFAULT):
     return execute_command(f"weather {type} {duration}")

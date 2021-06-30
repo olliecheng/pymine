@@ -1,22 +1,12 @@
-# from pymine import *
-import pymine
-
-# print(pymine.__pymine_transformer_get_caller_filename())
+from pymine import *
 
 import asyncio
 import random
 from typing import Sequence
 
-initialised = False
-
-print(__file__, __name__)
 from pprint import pprint
 
 import sys
-
-for k, v in sys.modules.items():
-    print(k, getattr(v, "__loader__", None))
-# pprint(globals())
 
 
 async def lever_on(resp):
@@ -174,7 +164,7 @@ def test():
 
 def examplea():
     # asyncio.get_event_loop().run_until_complete(test())
-    test()
+    # test()
 
     print("Start")
     import time
@@ -185,14 +175,10 @@ def examplea():
 
     s = time.time()
     for _ in range(100):
-        summon(entities.chicken.type[0], Pos(~5, ~1, ~0))
+        summon(entities.chicken.type[0], Pos("~5", "~1", "~0"))
 
     say("Pop!")
 
     kill(entities.chicken)
-    # TODO: BUGS
     kill(entities.item)
     print(time.time() - s)
-
-
-examplea()

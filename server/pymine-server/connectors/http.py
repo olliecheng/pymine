@@ -70,7 +70,9 @@ class HTTPConnector(Connector):
 
         time_taken = time.time() - start_time
         log.debug(f"Processed request in {time_taken:.2f}s.")
-        return web.Response(text=json.dumps(response))
+        return web.Response(
+            text=json.dumps(response), headers={"Content-Type": "application/json"}
+        )
 
     def start(self, loop: asyncio.BaseEventLoop):
         app = web.Application()
