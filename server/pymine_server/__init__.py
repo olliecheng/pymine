@@ -1,4 +1,4 @@
-from .main import start_server, create_server_thread
+from .server import start_server, create_server_thread
 from .tray import create_tray, run_tray
 
 
