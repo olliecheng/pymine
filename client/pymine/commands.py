@@ -40,8 +40,8 @@ async def async_execute_command(command: str, catch_errors: bool = False):
 
     # print(command)
     try:
-        # r = requests.get(f"http://127.0.0.1:8080/{command}")
-        r = await session.get(f"http://127.0.0.1:8080/{command}")
+        # r = requests.get(f"http://127.0.0.1:19133/{command}")
+        r = await session.get(f"http://127.0.0.1:19133/{command}")
     except aiohttp.client_exceptions.ClientConnectorError:
         # server not running!
         print(

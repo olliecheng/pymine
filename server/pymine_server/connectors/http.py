@@ -17,7 +17,7 @@ class HTTPConnector(Connector):
         publisher: Publisher,
         recv_queue: asyncio.Queue,
         host: str = "localhost",
-        port: int = 8080,
+        port: int = 19133,
     ):
         self.publisher = publisher
         self.recv_queue = recv_queue

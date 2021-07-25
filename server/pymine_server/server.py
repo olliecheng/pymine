@@ -54,14 +54,7 @@ def start_server(icon: Optional[Icon] = None, port: int = 19131) -> None:
 
 
 def create_server_thread(icon: Icon, port: int = 19131) -> threading.Thread:
-    t = threading.Thread(
-        target=start_server,
-        args=(
-            icon,
-            port,
-        ),
-        daemon=True,
-    )
+    t = threading.Thread(target=start_server, args=(icon, port,), daemon=True,)
     t.start()
     return t
 

@@ -38,25 +38,21 @@ def create_menu(port: int) -> menu:
         item("pymine server", NO_ACTION, enabled=False),
         item(f"Active on port {port}", NO_ACTION, enabled=False),
         item("", NO_ACTION, enabled=False),
-        item("  Type the following command into Minecraft:", NO_ACTION, enabled=False),
+        item("Type the following command into Minecraft:", NO_ACTION, enabled=False),
         item(
             f"/connect localhost:{port}",
             lambda icon: copy_to_clipboard(icon=icon, port=port),
             enabled=True,
             default=True,
         ),
-        item(
-            "  (click above to copy)  ",
-            NO_ACTION,
-            enabled=False,
-        ),
+        item("(click above to copy)", NO_ACTION, enabled=False,),
         item("", NO_ACTION, enabled=False),
         item("Quit", quit_handler, enabled=True),
     )
 
 
-def create_tray() -> pystray.Icon:
-    icon = pystray.Icon("pymine", load_icon(), menu=create_menu(port=400))
+def create_tray(port: int = 19131) -> pystray.Icon:
+    icon = pystray.Icon("pymine", load_icon(), menu=create_menu(port=port))
     return icon
 
 
