@@ -20,6 +20,7 @@ colorlog = "^5.0.1"
 pyperclip = "^1.8.2"
 
 [tool.poetry.dev-dependencies]
+cx-freeze = "^6.7"
 
 [tool.poetry.scripts]
 run = "pymine_server:run_program"
