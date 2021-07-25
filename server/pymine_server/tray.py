@@ -47,6 +47,7 @@ def create_menu(port: int) -> menu:
         ),
         item("(click above to copy)", NO_ACTION, enabled=False,),
         item("", NO_ACTION, enabled=False),
+        item("WS: 19132, HTTP: 19133", NO_ACTION, enabled=False),
         item("Quit", quit_handler, enabled=True),
     )
 
@@ -59,4 +60,4 @@ def create_tray(port: int = 19131) -> pystray.Icon:
 def run_tray() -> None:
     icon = create_tray()
     log.info("Created tray icon")
-    icon.run()
+    icon.run(setup=lambda icon: icon.notify("Pymine server initiated!"))
