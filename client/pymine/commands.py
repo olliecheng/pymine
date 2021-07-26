@@ -147,7 +147,7 @@ def give(
     return execute_command(f"give {target} {item_name} {amount} {data}")
 
 
-def kill(target: str):
+def kill(target: Union[str, BaseTarget]):
     return execute_command(f"kill {target}", catch_errors=False)
 
 
