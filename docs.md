@@ -1,5 +1,33 @@
 # pymine-client documentation
 
+**INCOMPLETE**
+
+Commands (check the Minecraft Wiki for usage):
+```
+clone
+executeasother
+fill
+replace
+give
+kill
+removeblock
+say
+setblock
+summon
+testforblock
+testforblocks
+timeset
+teleport
+weather
+```
+
+Event handlers:
+```
+wait_for_player_movement(x, y, z, radius) (all optional)
+wait_for_block_broken(coordinates, timeout)
+```
+
+
 # User commands
 
 
@@ -129,6 +157,66 @@ kill(entities.chicken)
   Kills all chickens.
 ```
 **Kill entities or players.**
+<br><br>
 
 target: Entity: entity to kill.
+
+<br>
+
+---
+
+### removeblock
+```py
+removeblock(position)
+
+Examples:
+removeblock(Pos(1, 2, 3))
+  Deletes the block at 1, 2, 3.
+```
+**Removes the block at a given position**
+<br><br>
+
+position: Position: position of the block to remove.
+
+<br>
+
+---
+
+### say
+```py
+say(message)
+
+Examples:
+say("Hello")
+  Says "hello" in chat
+```
+**Say a message in Minecraft chat**
+<br><br>
+
+message: str: message to send
+
+<br>
+
+---
+
+### setblock
+```py
+setblock(position, tileName)
+
+Examples:
+setblock(Pos(1, 2, 3), blocks.grass)
+  Places a grass block at 1, 2, 3.
+```
+**Set the block at a particular coordinate.**
+<br><br>
+
+position
+
+
+
+
+
+
+
+
 
