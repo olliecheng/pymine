@@ -1,6 +1,8 @@
 # pymine
 A set of bindings for Minecraft Education Edition.
 
+For documentation, check out the [wiki](https://github.com/denosawr/pymine/wiki).
+
 ## How to use
 Install `pymine-server-0.x-amd64.msi` from [Releases](https://github.com/denosawr/pymine/releases). To install the client-side package to the Thonny Python installation, run the following command in `Windows Powershell`:
 
