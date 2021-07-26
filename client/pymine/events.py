@@ -108,22 +108,19 @@ def wait_for_player_movement(
 
 
 def wait_for_block_broken(
-    block_type: Union[Sequence[str], str],
     block_coordinates: Optional[Position] = None,
     timeout: int = 0,
 ):
-    if isinstance(block_type, str):
-        block_type = [str]
 
     async def filter_func(r):
         if (
             not block_coordinates
-            or not (
+            or (
                 await commands.async_execute_command(
                     f"testforblock {block_coordinates} {blocks.air}", catch_errors=False
                 )
-            )["statusCode"]
-        ) and r["properties"]["Block"] in block_type:
+            )["matches"]
+        ):
             return True
 
     result = wait_for_event("BlockBroken", filter_func, timeout=timeout)
