@@ -1,8 +1,8 @@
-# Download latest denosawr/pymine release from github
+# Download & install latest denosawr/pymine release from github
 
-<#
+#<#
 $repo = "denosawr/pymine"
-$file = "pymine-client-dist.zip"
+$file = "pymine_client-0.1.0-py3-none-any.whl"
 
 $releases = "https://api.github.com/repos/$repo/releases"
 
@@ -10,26 +10,14 @@ Write-Host Determining latest release
 $tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
 
 $download = "https://github.com/$repo/releases/download/$tag/$file"
-$name = $file.Split(".")[0]
-$zip = "$name-$tag.zip"
-$dir = "$name-$tag"
 
-Write-Host Dowloading latest release
-Invoke-WebRequest $download -Out $zip
-
-Write-Host Extracting release files
-Expand-Archive $zip -Force
+Write-Host Dowloading latest library wheel
+Invoke-WebRequest $download -Out $file
 ##>
 
-$dir = "pymine-client-dist-v0.1b"
+Invoke-Expression $($env:APPDATA + 
+    "\..\local\Programs\Thonny\python.exe -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org $file"
+)
 
-cd $dir
-Get-ChildItem -Filter *.whl | ForEach {
-    Invoke-Expression $($env:APPDATA + 
-        "\..\local\Programs\Thonny\python.exe -m pip install --force-reinstall --no-index --no-deps $_"
-    )
-}
-cd ../
-
-#Remove-Item $zip -Force
+Remove-Item $file
 #Remove-Item $dir -Recurse -Force
