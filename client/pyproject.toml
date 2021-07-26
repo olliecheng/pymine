@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pymine-client"
-version = "0.1.0"
+version = "0.1.1b"
 description = "Server exposing a programmatic interface to Minecraft: Education Edition"
 authors = ["Ollie Cheng <denosawr@vivaldi.net>"]
 license = "MIT"
