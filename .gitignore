@@ -21,7 +21,7 @@ sdist/
 var/
 wheels/
 wheelhouse/
-dist.zip
+pymine-client-dist.zip
 pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
