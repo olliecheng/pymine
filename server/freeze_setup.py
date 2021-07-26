@@ -2,10 +2,10 @@ import sys
 from cx_Freeze import setup, Executable
 
 build_exe_options = {
-    "packages": ["pymine_server", "pystray._win32"],
+    "packages": ["pymine_server", "pystray._win32", "websockets.legacy.server"],
     "include_msvcr": True,
+    "silent": True,
 }
-base = "Win32GUI"
 
 msi_data = {
     "ProgId": [
@@ -40,13 +40,18 @@ setup(
     executables=[
         Executable(
             "run.py",
-            base=base,
             target_name="pymine-server",
+            base="Win32GUI",
             shortcut_name="Pymine Server",
             shortcut_dir="ProgramMenuFolder",
             copyright="https://github.com/denosawr/pymine",
             icon="pymine_server/resources/icon.ico",
-        )
+        ),
+        Executable(
+            "run.py",
+            target_name="pymine-server-console",
+            copyright="https://github.com/denosawr/pymine",
+            icon="pymine_server/resources/icon.ico",
+        ),
     ],
-    silent=True,
 )
