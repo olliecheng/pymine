@@ -162,23 +162,39 @@ def test():
     # pprint.pprint(results)
 
 
-def examplea():
-    # asyncio.get_event_loop().run_until_complete(test())
-    # test()
+def break_me():
+    block_position = Pos(116, 72, -5)
+    say("Don't break")
+    while True:
+        wait_for_block_broken(block_position)
+        say("Nu-uh!")
+        setblock(block_position, blocks.diamond_block)
 
-    print("Start")
-    import time
 
-    # clone(Pos(98, 62, 2), Pos(100, 63, -2), Pos(100, 70, -2))
-
-    say("I call this chicken popcorn...")
+def chicken_popcorn():
+    say("I call this popcorn chicken...")
 
     s = time.time()
-    for _ in range(100):
+    for _ in range(50):
         summon(entities.chicken.type[0], Pos("~5", "~1", "~0"))
 
     say("Pop!")
 
     kill(entities.chicken)
     kill(entities.item)
-    print(time.time() - s)
+
+def midas_touch():
+    say("Anything I touch turns to gold")
+    while True:
+        if not testforblock(Pos("~", "~-1", "~"), blocks.air):
+            setblock(Pos("~", "~-1", "~"), blocks.gold_block)
+
+def tnt_challenge():
+    while True:
+        summon(entities.tnt, "~ ~ ~")
+        time.sleep(10)
+
+if __name__ == "__main__":
+    # examplea()
+    # midas_touch()
+    break_me()
