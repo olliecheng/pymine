@@ -21,7 +21,7 @@ sdist/
 var/
 wheels/
 wheelhouse/
-wheelhouse.zip
+dist.zip
 pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
