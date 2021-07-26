@@ -10,7 +10,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9.0"
+python = "^3.7.0"
 requests = "^2.24.0"
 websocket-client = "^0.57.0"
 websockets = "^8.1"
