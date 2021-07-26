@@ -22,6 +22,9 @@ cchardet = "^2.1.7"
 
 ast-decompiler = "^0.4.0"
 
+[tool.poetry.dev-dependencies]
+wheelhouse = "^0.1.4"
+
 [tool.poetry.scripts]
 # client = "client:example"
 client = "example:example"

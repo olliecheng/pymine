@@ -1,0 +1,1 @@
+Invoke-Expression $($env:APPDATA + "\..\local\Programs\Thonny\python.exe -m pip -V")
