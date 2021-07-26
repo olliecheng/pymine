@@ -6,6 +6,7 @@ from pystray import Menu as menu, MenuItem as item
 from .utils.logging import getLogger
 
 log = getLogger("tray")
+log.setLevel("INFO")
 
 
 def load_icon(filePath: str = "icon.png") -> Image:
