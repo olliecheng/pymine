@@ -1,19 +1,5 @@
 from pymine import *
-
-import asyncio
 import random
-from typing import Sequence
-
-from pprint import pprint
-
-import sys
-
-
-async def lever_on(resp):
-    results = await async_execute_commands_simultaneously(
-        [f"testforblock 104 64 -3 lever {i}" for i in range(8, 17)], catch_errors=False
-    )
-    return any([x["matches"] == True for x in results])
 
 
 def random_flower_position():
@@ -27,7 +13,7 @@ def random_flower_position():
     return Pos(coords[0], 4, coords[1])
 
 
-def example():
+def main_game():
     timeout = 15
 
     random_flower_position()
@@ -133,68 +119,5 @@ def example():
 
         timeout = max(timeout - 1, 5)
 
-
-def ex3():
-    while True:
-
-        def filter_func(resp):
-            testforblock(
-                Pos(104, 64, -3),
-                blocks.lever,
-            )
-
-        r = wait_for_event("ItemInteracted", timeout=0)
-        pprint.pprint(r)
-    # pprint.pprint(wait_for_event("ItemCrafted", lambda x: True, timeout=0))
-
-
-def test():
-    import time
-
-    start = time.time()
-    results = execute_commands_simultaneously(
-        [f"testforblock 104 64 -3 lever {i}" for i in range(8, 17)], catch_errors=False
-    )
-    print(any([x["matches"] == True for x in results]))
-    print(time.time() - start)
-    # import pprint
-
-    # pprint.pprint(results)
-
-
-def break_me():
-    block_position = Pos(116, 72, -5)
-    say("Don't break")
-    while True:
-        wait_for_block_broken(block_position)
-        say("Nu-uh!")
-        setblock(block_position, blocks.diamond_block)
-
-
-def chicken_popcorn():
-    say("I call this popcorn chicken...")
-
-    s = time.time()
-    for _ in range(50):
-        summon(entities.chicken.type[0], Pos("~5", "~1", "~0"))
-
-    say("Pop!")
-
-    kill(entities.chicken)
-    kill(entities.item)
-
-def midas_touch():
-    say("Anything I touch turns to gold")
-    while True:
-        if not testforblock(Pos("~", "~-1", "~"), blocks.air):
-            setblock(Pos("~", "~-1", "~"), blocks.gold_block)
-
-def tnt_challenge():
-    while True:
-        summon(entities.tnt, "~ ~ ~")
-        time.sleep(10)
-
 if __name__ == "__main__":
-    # examplea()
-    # midas_touch()
-    break_me()
+    main_game()
