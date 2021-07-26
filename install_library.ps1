@@ -5,7 +5,7 @@ $originalfg = $host.ui.RawUI.ForegroundColor
 $host.ui.RawUI.ForegroundColor = "Cyan"
 
 $repo = "denosawr/pymine"
-$file = "pymine_client-0.1.0-py3-none-any.whl"
+$file = "pymine_client-py3-none-any.whl"
 
 $releases = "https://api.github.com/repos/$repo/releases"
 
